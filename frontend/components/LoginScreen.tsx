@@ -21,14 +21,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, 
     onLogin(email, password);
   };
 
-  const quickLoginRoles: { role: UserRole; label: string }[] = [
-    { role: UserRole.EDITOR, label: 'Login as Editor' },
-    { role: UserRole.SCRIPT_WRITER, label: 'Login as Script Writer' },
-    { role: UserRole.PROJECT_MANAGER, label: 'Login as Project Manager' },
-    { role: UserRole.FINANCE, label: 'Login as Finance' },
-    { role: UserRole.VIEWER, label: 'Login as Viewer' },
-  ];
-
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="bg-white p-8 rounded-xl shadow-strong w-full max-w-md border border-gray-200/80">
