@@ -1,0 +1,33 @@
+# This file is the blueprint for Cloud Build.
+# It lives in your 'frontend' directory.
+steps:
+  # Step 1: Install dependencies using npm.
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    id: 'InstallDependencies'
+
+  # Step 2: Build the React/Vite application.
+  # This step securely accesses the API key from Secret Manager
+  # and makes it available as an environment variable for the build command.
+  - name: 'gcr.io/cloud-builders/npm'
+    id: 'BuildApp'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'export VITE_GEMINI_API_KEY=$$(gcloud secrets versions access latest --secret=gemini-api-key) && npm run build'
+    secretEnv: ['VITE_GEMINI_API_KEY']
+
+  # Step 3: Deploy the contents of the 'dist' folder to your GCS bucket.
+  # Replace [YOUR_BUCKET_NAME] with the name of your bucket.
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['-m', 'rsync', '-r', '-c', '-d', './dist', 'gs://shifted-project-os-deployment-website']
+    id: 'DeployToGCS'
+
+# This section tells Cloud Build which secret to make available.
+# Replace [YOUR_PROJECT_ID] with your actual Project ID.
+availableSecrets:
+  secretManager:
+  - versionName: projects/shifted-project-os-deployment/secrets/gemini-api-key/versions/latest
+    env: 'VITE_GEMINI_API_KEY'
+
+timeout: '1200s'
