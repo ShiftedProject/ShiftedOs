@@ -1,147 +1,135 @@
-
 import React from 'react';
+import { User, UserRole } from '../types';
+
+// Import all the necessary icons
+import DashboardIcon from './icons/DashboardIcon';
 import ProjectIcon from './icons/ProjectIcon';
+import AssetIcon from './icons/AssetIcon';
+import TeamIcon from './icons/TeamIcon';
 import AnalyticsIcon from './icons/AnalyticsIcon';
 import FinanceIcon from './icons/FinanceIcon';
+import CrmIcon from './icons/CrmIcon';
 import KnowledgeIcon from './icons/KnowledgeIcon';
-import TargetIcon from './icons/TargetIcon';
+import OkrIcon from './icons/OkrIcon';
 import ReportIcon from './icons/ReportIcon';
-import UserIcon from './icons/UserIcon'; 
-import ChevronDoubleLeftIcon from './icons/ChevronDoubleLeftIcon';
-import ChevronDoubleRightIcon from './icons/ChevronDoubleRightIcon';
-import FolderIcon from './icons/FolderIcon'; 
-import UsersIcon from './icons/UsersIcon'; 
-import CogIcon from './icons/CogIcon'; // For Admin
-import ChartBarSquareIcon from './icons/ChartBarSquareIcon'; // Added for Dashboard
-import { User } from '../types';
+import AdminIcon from './icons/AdminIcon';
+import LogoutIcon from './icons/LogoutIcon';
+import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
 
-interface NavItemProps {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-  isCollapsed?: boolean; 
-}
-
-const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, isCollapsed }) => (
-  <button
-    onClick={onClick}
-    title={isCollapsed ? label : undefined}
-    className={`flex items-center w-full py-3 rounded-lg transition-all duration-150 group
-                ${isCollapsed ? 'md:px-3 md:justify-center' : 'px-4'}
-                ${active 
-                    ? 'bg-main-accent text-white shadow-md hover:bg-main-accent/90' 
-                    : 'text-text-secondary hover:bg-main-accent/10 hover:text-main-accent'
-                }`}
-  >
-    <span className={`${isCollapsed ? 'md:mr-0' : 'mr-3'} group-hover:scale-110 transition-transform`}>{icon}</span>
-    <span className={`${isCollapsed ? 'md:hidden' : 'block'}`}>{label}</span>
-  </button>
-);
-
+// Define the props that this component receives from App.tsx
 interface SidebarProps {
   activeView: string;
-  setActiveView: (view: string) => void;
+  setActiveView: (viewId: string) => void;
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (isOpen: boolean) => void;
   isDesktopSidebarCollapsed: boolean;
   toggleDesktopSidebarCollapse: () => void;
-  currentUser: User | null; // Added currentUser
+  currentUser: User | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeView, 
-  setActiveView, 
-  isMobileSidebarOpen, 
+const Sidebar: React.FC<SidebarProps> = ({
+  activeView,
+  setActiveView,
+  isMobileSidebarOpen,
   setIsMobileSidebarOpen,
   isDesktopSidebarCollapsed,
   toggleDesktopSidebarCollapse,
-  currentUser
+  currentUser,
 }) => {
+  
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <ChartBarSquareIcon className="w-5 h-5" /> }, // Added Dashboard
-    { id: 'tasks', label: 'Projects & Tasks', icon: <ProjectIcon className="w-5 h-5" /> },
-    { id: 'analytics', label: 'Analytics & Insights', icon: <AnalyticsIcon className="w-5 h-5" /> },
-    { id: 'finance', label: 'Finance & Budgeting', icon: <FinanceIcon className="w-5 h-5" /> },
-    { id: 'assets', label: 'Asset Inventory', icon: <FolderIcon className="w-5 h-5" /> }, 
-    { id: 'team', label: 'Team Management', icon: <UsersIcon className="w-5 h-5" /> }, 
-    { id: 'crm', label: 'Relations & Collaborators', icon: <UserIcon className="w-5 h-5" /> },
-    { id: 'knowledge', label: 'Knowledge Base', icon: <KnowledgeIcon className="w-5 h-5" /> },
-    { id: 'okr', label: 'Objectives & OKRs', icon: <TargetIcon className="w-5 h-5" /> },
-    { id: 'reports', label: 'Report Builder', icon: <ReportIcon className="w-5 h-5" /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.VIEWER, UserRole.FINANCE, UserRole.PROJECT_MANAGER] },
+    { id: 'tasks', label: 'Projects & Tasks', icon: <ProjectIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.VIEWER, UserRole.FINANCE, UserRole.PROJECT_MANAGER] },
+    { id: 'assets', label: 'Asset Inventory', icon: <AssetIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
+    { id: 'team', label: 'Team Management', icon: <TeamIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
+    { id: 'finance', label: 'Finance', icon: <FinanceIcon />, roles: [UserRole.ADMIN, UserRole.FINANCE] },
+    { id: 'crm', label: 'Relations (CRM)', icon: <CrmIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'knowledge', label: 'Knowledge Base', icon: <KnowledgeIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER] },
+    { id: 'okr', label: 'OKRs', icon: <OkrIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'reports', label: 'Reports', icon: <ReportIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
+    { id: 'admin', label: 'Admin Panel', icon: <AdminIcon />, roles: [UserRole.ADMIN] },
   ];
 
-  const handleItemClick = (viewId: string) => {
+  const handleNavigation = (viewId: string) => {
     setActiveView(viewId);
-    if (window.innerWidth < 768) { 
-        setIsMobileSidebarOpen(false);
+    if (isMobileSidebarOpen) {
+      setIsMobileSidebarOpen(false);
     }
-  }
+  };
+  
+  const filteredNavItems = navItems.filter(item => 
+    currentUser && item.roles.includes(currentUser.role)
+  );
 
-  const isAdmin = currentUser?.email === 'admin@shiftedos.com';
+  const sidebarContent = (
+    <>
+      <div className="flex items-center mb-10 px-4" style={{ height: '4rem' /* Equivalent to h-16 */ }}>
+        <ShiftedOSLogoIcon className="h-10 w-10 text-main-accent" />
+        {!isDesktopSidebarCollapsed && (
+          <span className="ml-3 text-2xl font-bold text-text-primary">ShiftedOS</span>
+        )}
+      </div>
+
+      <nav className="flex-1 space-y-2 px-2">
+        {filteredNavItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleNavigation(item.id)}
+            className={`w-full flex items-center p-3 rounded-lg transition-colors duration-200 ${
+              activeView === item.id
+                ? 'bg-main-accent text-white shadow-md'
+                : 'text-text-secondary hover:bg-main-accent/10 hover:text-text-primary'
+            } ${isDesktopSidebarCollapsed ? 'justify-center' : ''}`}
+            title={item.label}
+          >
+            <span className="w-6 h-6">{item.icon}</span>
+            {!isDesktopSidebarCollapsed && (
+              <span className="ml-4 font-medium">{item.label}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      <div className="mt-auto p-2">
+         <button
+            onClick={toggleDesktopSidebarCollapse}
+            className="w-full hidden md:flex items-center p-3 rounded-lg text-text-secondary hover:bg-main-accent/10 hover:text-text-primary"
+            title={isDesktopSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+           <span className="w-6 h-6">{/* Add collapse/expand icon here */}</span>
+            {!isDesktopSidebarCollapsed && (
+              <span className="ml-4 font-medium">Collapse</span>
+            )}
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <>
-      {isMobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" 
-          onClick={() => setIsMobileSidebarOpen(false)}
-          aria-hidden="true"
-        ></div>
-      )}
-      <div 
-        className={`h-full bg-glass-bg backdrop-blur-xl border-r border-white/20 p-4 fixed top-0 left-0 shadow-xl flex flex-col z-40
-                    transition-all duration-300 ease-in-out 
-                    md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                    ${isDesktopSidebarCollapsed ? 'md:w-20' : 'w-64'}`}
+      {/* Mobile Sidebar */}
+      <div
+        className={`fixed inset-0 z-40 bg-gray-900 bg-opacity-50 transition-opacity md:hidden ${
+          isMobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+      ></div>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 transform flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out md:hidden ${
+          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
-        <div className={`mb-6 transition-all duration-300 ease-in-out ${isDesktopSidebarCollapsed ? 'md:opacity-0 md:h-0 md:overflow-hidden md:p-0 md:mb-2' : 'md:opacity-100 md:h-auto'}`}>
-          <h1 className="text-3xl font-bold text-main-accent text-center md:text-left">ShiftedOS</h1>
-          <p className="text-xs text-text-secondary text-center md:text-left">by ShiftedProject.ID</p>
-        </div>
-        <nav className="flex-grow space-y-1.5 overflow-y-auto">
-          {navItems.map(item => (
-            <NavItem
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              active={activeView === item.id}
-              onClick={() => handleItemClick(item.id)}
-              isCollapsed={isDesktopSidebarCollapsed}
-            />
-          ))}
-        </nav>
-        
-        <div className={`mt-auto border-t border-white/20 pt-3 space-y-1.5 ${isDesktopSidebarCollapsed ? 'md:border-none md:pt-1' : ''}`}>
-           <NavItem 
-            icon={<UserIcon className="w-5 h-5" />} 
-            label="User Profile" 
-            onClick={() => handleItemClick('profile')}
-            isCollapsed={isDesktopSidebarCollapsed}
-            active={activeView === 'profile'}
-            />
-            {isAdmin && (
-               <NavItem 
-                icon={<CogIcon className="w-5 h-5" />} 
-                label="Admin Panel" 
-                onClick={() => handleItemClick('admin')}
-                isCollapsed={isDesktopSidebarCollapsed}
-                active={activeView === 'admin'}
-                />
-            )}
-        </div>
+        {sidebarContent}
+      </div>
 
-        <div className={`hidden md:block mt-3 pt-3 ${isDesktopSidebarCollapsed ? '' : 'border-t border-white/20'}`}>
-            <button
-                onClick={toggleDesktopSidebarCollapse}
-                className="w-full flex items-center justify-center p-2.5 rounded-lg text-text-secondary hover:bg-main-accent/10 hover:text-main-accent transition-colors duration-150 group"
-                title={isDesktopSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-                {isDesktopSidebarCollapsed ? 
-                    <ChevronDoubleRightIcon className="w-5 h-5 group-hover:scale-110 transition-transform" /> : 
-                    <ChevronDoubleLeftIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />}
-            </button>
-        </div>
+      {/* Desktop Sidebar */}
+      <div
+        className={`hidden md:fixed md:inset-y-0 md:flex md:flex-col bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          isDesktopSidebarCollapsed ? 'w-20' : 'w-64'
+        }`}
+      >
+        {sidebarContent}
       </div>
     </>
   );
