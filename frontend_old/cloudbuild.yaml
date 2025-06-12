@@ -1,0 +1,38 @@
+# This file must be located at: frontend/cloudbuild.yaml
+
+steps:
+  # Step 1: Tell Cloud Build to run 'npm install' inside the 'frontend' directory.
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    dir: 'frontend' # This line is important! It runs the command in the subdirectory.
+    id: 'InstallDependencies'
+
+  # Step 2: Build the Vite application, securely injecting the API key.
+  - name: 'gcr.io/cloud-builders/npm'
+    id: 'BuildApp'
+    dir: 'frontend' # Run this command in the frontend directory too.
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'export VITE_GEMINI_API_KEY=$$(gcloud secrets versions access latest --secret=gemini-api-key) && npm run build'
+    secretEnv: ['VITE_GEMINI_API_KEY']
+
+  # Step 3: Deploy the contents of the 'frontend/dist' folder to your GCS bucket.
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args:
+      - '-m'
+      - 'rsync'
+      - '-r'
+      - '-c'
+      - '-d'
+      - 'frontend/dist' # Source is now frontend/dist
+      - 'gs://shifted-project-os-deployment-website' # Your specific bucket name
+    id: 'DeployToGCS'
+
+# This section tells Cloud Build which secret to make available.
+availableSecrets:
+  secretManager:
+  - versionName: projects/shifted-project-os-deployment/secrets/gemini-api-key/versions/latest
+    env: 'VITE_GEMINI_API_KEY'
+
+timeout: '1200s'

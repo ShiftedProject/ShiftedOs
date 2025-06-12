@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShiftedOS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-main-background: #F5ECE0; /* Default if not overridden by landing */
+        --color-glass-bg: rgba(255, 255, 255, 0.35);
+        --color-main-accent: #336D82;
+        --color-secondary-accent: #5F99AE;
+        --color-highlight: #693382;
+        --color-text-primary: #1F2937; /* Default text color */
+        --color-text-secondary: #6B7280;
+        
+        --color-liquid-btn-bg: rgba(255, 255, 255, 0.1);
+        --color-liquid-btn-border: rgba(255, 255, 255, 0.3);
+        --color-liquid-sheen-light: rgba(255, 255, 255, 0.4);
+        --color-liquid-sheen-dark: rgba(255, 255, 255, 0.05);
+        --color-liquid-btn-hover-bg: rgba(255, 255, 255, 0.15);
+        --color-liquid-btn-active-bg: rgba(255, 255, 255, 0.05);
+
+        /* New specific landing page theme colors (GitHub inspired: dark header/footer, light content) */
+        --color-landing-bg: #FFFFFF; /* Main content background */
+        --color-landing-text: #1F2937; /* Main text on light background */
+        --color-landing-header-bg: #161B22; /* Dark header */
+        --color-landing-header-text: #F0F6FC; /* Light text on dark header */
+        --color-landing-footer-bg: #161B22; /* Dark footer */
+        --color-landing-footer-text: #C9D1D9; /* Light text on dark footer */
+        --color-landing-primary-cta: var(--color-main-accent); /* Main accent for CTAs */
+        --color-landing-secondary-cta: var(--color-secondary-accent);
+      }
+      body.app-body {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--color-main-background); /* Default for authenticated app */
+        color: var(--color-text-primary);
+      }
+      body.landing-page-body {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--color-landing-bg); /* Specific for landing page */
+        color: var(--color-landing-text);
+      }
+      /* Custom scrollbar for better aesthetics with new theme */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.05);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--color-main-accent); 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-secondary-accent); 
+      }
+    </style>
+    <script>
+      // Apply theme from localStorage before Tailwind config or React app mounts
+      (function() {
+        try {
+          const storedTheme = localStorage.getItem('shiftedOSTheme');
+          if (storedTheme) {
+            const themeColors = JSON.parse(storedTheme);
+            const root = document.documentElement;
+            if (themeColors.mainBackground) root.style.setProperty('--color-main-background', themeColors.mainBackground);
+            if (themeColors.glassBg) root.style.setProperty('--color-glass-bg', themeColors.glassBg);
+            if (themeColors.mainAccent) root.style.setProperty('--color-main-accent', themeColors.mainAccent);
+            if (themeColors.secondaryAccent) root.style.setProperty('--color-secondary-accent', themeColors.secondaryAccent);
+            if (themeColors.highlight) root.style.setProperty('--color-highlight', themeColors.highlight);
+            if (themeColors.textPrimary) root.style.setProperty('--color-text-primary', themeColors.textPrimary);
+            if (themeColors.textSecondary) root.style.setProperty('--color-text-secondary', themeColors.textSecondary);
+          }
+        } catch (e) {
+          console.error("Failed to apply theme from localStorage", e);
+        }
+      })();
+
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Montserrat', 'sans-serif'],
+            },
+            colors: {
+              'main-background': 'var(--color-main-background)',
+              'glass-bg': 'var(--color-glass-bg)',
+              'main-accent': 'var(--color-main-accent)',
+              'secondary-accent': 'var(--color-secondary-accent)',
+              'highlight': 'var(--color-highlight)',
+              'text-primary': 'var(--color-text-primary)',
+              'text-secondary': 'var(--color-text-secondary)',
+              
+              'liquid-btn-bg': 'var(--color-liquid-btn-bg)',
+              'liquid-btn-border': 'var(--color-liquid-btn-border)',
+              'liquid-sheen-light': 'var(--color-liquid-sheen-light)',
+              'liquid-sheen-dark': 'var(--color-liquid-sheen-dark)',
+              'liquid-btn-hover-bg': 'var(--color-liquid-btn-hover-bg)',
+              'liquid-btn-active-bg': 'var(--color-liquid-btn-active-bg)',
+
+              // Landing page specific theme colors
+              'landing-bg': 'var(--color-landing-bg)',
+              'landing-text': 'var(--color-landing-text)',
+              'landing-header-bg': 'var(--color-landing-header-bg)',
+              'landing-header-text': 'var(--color-landing-header-text)',
+              'landing-footer-bg': 'var(--color-landing-footer-bg)',
+              'landing-footer-text': 'var(--color-landing-footer-text)',
+              'landing-primary-cta': 'var(--color-landing-primary-cta)',
+              'landing-secondary-cta': 'var(--color-landing-secondary-cta)',
+            },
+            boxShadow: {
+              'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+              'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              'strong': '0 8px 20px rgba(0,0,0,0.12)', 
+              'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              'glass-depth': '0 4px 12px rgba(0, 0, 0, 0.15)', 
+              'liquid-btn-shadow': '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0,0,0,0.08)',
+            },
+            backdropBlur: {
+              'xl': '24px', 
+              '2xl': '40px', 
+            },
+            gradientColorStops: (theme) => ({
+                ...theme('colors'),
+            }),
+            animation: {
+              modalAppear: 'modalAppear 0.3s ease-out forwards',
+              subtleShine: 'subtleShine 4s ease-in-out infinite alternate',
+              fadeInUp: 'fadeInUp 0.8s ease-out forwards',
+              slideInLeft: 'slideInLeft 0.8s ease-out forwards',
+            },
+            keyframes: {
+              modalAppear: {
+                '0%': { transform: 'scale(0.95)', opacity: '0' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+              subtleShine: {
+                '0%': { 'background-position': '0% 50%' },
+                '100%': { 'background-position': '100% 50%' },
+              },
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              slideInLeft: {
+                '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                '100%': { opacity: '1', transform: 'translateX(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="app-body"> {/* Default to app-body, App.tsx will change if landing page */}
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

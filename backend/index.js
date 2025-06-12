@@ -2,32 +2,52 @@
 
 const express = require('express');
 const cors = require('cors');
-// 1. Import the Firestore library
+const admin = require('firebase-admin');
 const { Firestore } = require('@google-cloud/firestore');
 
-// --- INITIALIZATION ---
-const app = express();
-// 2. Initialize Firestore. Because you ran `gcloud auth application-default login` earlier,
-// this library will automatically find your credentials and connect to your project's database.
- const firestore = new Firestore({
-  projectId: 'shifted-project-os-deployment'
+// --- FIREBASE ADMIN INIT ---
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(), // Assumes you're running this on GCP or with service account creds
 });
-// Create a reference to the 'tasks' collection. Firestore will create this collection
-// automatically when the first document is added.
+
+// --- FIRESTORE INIT ---
+const firestore = new Firestore({
+  projectId: 'shifted-project-os-deployment',
+});
 const tasksCollection = firestore.collection('tasks');
 
-// --- MIDDLEWARE ---
+// --- EXPRESS APP INIT ---
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- ROUTES ---
+// --- AUTH MIDDLEWARE ---
+async function authenticateFirebaseToken(req, res, next) {
+  const authHeader = req.headers.authorization;
 
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send('Unauthorized: No token provided');
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken; // Now you can access req.user.uid, email, etc.
+    next();
+  } catch (err) {
+    console.error('Token verification failed:', err);
+    return res.status(401).send('Unauthorized: Invalid token');
+  }
+}
+
+// --- TEST ROUTE ---
 app.get('/', (req, res) => {
   res.status(200).send('Backend server is live and running!');
 });
 
-// 3. NEW ROUTE: Get all tasks from the database
-app.get('/api/tasks', async (req, res) => {
+// --- GET TASKS (Protected) ---
+app.get('/api/tasks', authenticateFirebaseToken, async (req, res) => {
   try {
     const snapshot = await tasksCollection.get();
     const tasks = [];
@@ -41,10 +61,10 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-// 4. NEW ROUTE: Create a new task in the database
-app.post('/api/tasks', async (req, res) => {
+// --- POST TASK (Protected) ---
+app.post('/api/tasks', authenticateFirebaseToken, async (req, res) => {
   try {
-    const { text } = req.body; // Get the task text from the request body
+    const { text } = req.body;
 
     if (!text) {
       return res.status(400).send('Task text is required.');
@@ -53,9 +73,10 @@ app.post('/api/tasks', async (req, res) => {
     const newTask = {
       text: text,
       completed: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      createdBy: req.user.uid, // attach user info to task
     };
-    
+
     const docRef = await tasksCollection.add(newTask);
     res.status(201).json({ id: docRef.id, ...newTask });
   } catch (error) {
@@ -64,7 +85,7 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// --- SERVER INITIALIZATION ---
+// --- SERVER START ---
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
