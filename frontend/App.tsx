@@ -1,4 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
+
+// Firebase and API Imports
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { auth, db } from './src/firebase';
+
+// Component Imports
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import TaskCard from './components/TaskCard';
@@ -7,14 +14,6 @@ import Modal from './components/Modal';
 import Button from './components/Button';
 import SelectInput from './components/SelectInput';
 import Tag from './components/Tag';
-import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, Asset, AssetType, Role } from './types';
-import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, ASSET_TYPE_OPTIONS } from './constants';
-import PlusIcon from './components/icons/PlusIcon';
-import ProjectIcon from './components/icons/ProjectIcon';
-import BellIcon from './components/icons/BellIcon';
-import FolderIcon from './components/icons/FolderIcon';
-
-// Import new views
 import AnalyticsView from './components/AnalyticsView';
 import FinanceView from './components/FinanceView';
 import CrmView from './components/CrmView';
@@ -27,87 +26,47 @@ import AssetView from './components/AssetView';
 import TeamView from './components/TeamView';
 import LandingPage from './components/LandingPage';
 
-// --- AI INITIALIZATION SECTION ---
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// Icon Imports
+import PlusIcon from './components/icons/PlusIcon';
+import ProjectIcon from './components/icons/ProjectIcon';
+import BellIcon from './components/icons/BellIcon';
+import FolderIcon from './components/icons/FolderIcon';
 
-// For Vite:
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-// For Create React App (if you switch later):
-// const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-
-export const ai = new GoogleGenerativeAI(apiKey);
-// --- END OF AI SECTION ---
+// Type and Constant Imports
+import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, Asset, AssetType, Role } from './types';
+import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, ASSET_TYPE_OPTIONS } from './constants';
 
 
-const API_SIMULATION_DELAY = 750; // ms
-
-const initialProjectsData: Project[] = [
-  { id: 'PROJ-001', name: 'ShiftedOS Platform V2 Launch', description: 'Complete development and launch V2 of the ShiftedOS platform.', status: ProjectStatus.ACTIVE, startDate: '2024-07-01', endDate: '2024-09-30', owner: 'Product Team', createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'PROJ-002', name: 'Q4 Content Marketing Campaign', description: 'Plan and execute content marketing strategy for Q4.', status: ProjectStatus.PLANNING, startDate: '2024-10-01', endDate: '2024-12-31', owner: 'Marketing Team', createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'PROJ-003', name: 'Client Onboarding System', description: 'Develop a new system for onboarding new clients smoothly.', status: ProjectStatus.ON_HOLD, startDate: '2024-06-15', endDate: '2024-08-30', owner: 'Sales & Ops', createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() },
-];
-
-const initialTasksData: Task[] = [
-  { id: 'SP-001', projectId: 'PROJ-001', title: 'Design Homepage Mockups', description: 'Create detailed mockups for the new homepage, focusing on UX and modern aesthetics. Include mobile and desktop views.', status: TaskStatus.IN_PROGRESS, assignee: 'Jane Doe', startDate: '2024-07-05', deadline: '2024-07-15', duration: 10, divisionTag: Division.SHIFTPECT, contentPillarTag: ContentPillar.NONE, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString(), views: 1200, likes: 85, engagementRate: 7.1 },
-  { id: 'SP-002', projectId: 'PROJ-001', title: 'Develop Authentication Module', description: 'Implement user login, registration, and password recovery functionalities.', status: TaskStatus.TODO, assignee: 'John Smith', startDate: '2024-07-16', deadline: '2024-07-30', duration: 15, divisionTag: Division.SHIFTED, contentPillarTag: ContentPillar.NONE, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'SP-003', projectId: 'PROJ-002', title: 'Write Blog Post: "Future of AI"', description: 'Draft a 1000-word blog post on the future implications of AI in creative industries. Include research and expert quotes.', status: TaskStatus.IN_REVIEW, startDate: '2024-10-02', deadline: '2024-10-10', duration: 7, divisionTag: Division.SHIFTFACT, contentPillarTag: ContentPillar.PERSPEKTIF, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'SP-004', projectId: 'PROJ-001', title: 'User Testing for V2 Beta', description: 'Organize and conduct user testing sessions for the V2 beta release.', status: TaskStatus.TODO, assignee: 'Alice Wonderland', startDate: '2024-08-01', deadline: '2024-08-10', duration: 5, divisionTag: Division.MANAGEMENT, contentPillarTag: ContentPillar.NONE, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'SP-005', projectId: 'PROJ-001', title: 'API Integration for Analytics', description: 'Integrate third-party analytics API.', status: TaskStatus.DONE, assignee: 'John Smith', startDate: '2024-08-11', deadline: '2024-08-25', duration: 10, divisionTag: Division.SHIFTED, contentPillarTag: ContentPillar.NONE, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'SP-006', projectId: 'PROJ-002', title: 'Plan Social Media Calendar', description: 'Outline content for all social media platforms for October.', status: TaskStatus.TODO, assignee: 'Marketing Team', startDate: '2024-10-05', deadline: '2024-10-15', duration: 8, divisionTag: Division.SHIFTLIFE, contentPillarTag: ContentPillar.DIALOG, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-];
-
-const MOCK_ADMIN_USER: User = {
-  id: 'USR-001',
-  name: 'Admin User',
-  email: 'admin@shiftedos.com',
-  role: 'Administrator',
-  roleName: 'System Administrator',
-  bio: 'Overseeing the ShiftedOS platform and ensuring smooth operations. Passionate about productivity and creative workflows.',
-  avatarUrl: undefined
-};
-
-const MOCK_USERS_LIST: User[] = [
-  MOCK_ADMIN_USER,
-  { id: 'USR-002', name: 'Jane Doe', email: 'jane@shiftedos.com', role: 'Designer', roleName: 'Lead Designer', avatarUrl: `https://i.pravatar.cc/150?u=jane` },
-  { id: 'USR-003', name: 'John Smith', email: 'john@shiftedos.com', role: 'Developer', roleName: 'Senior Developer', avatarUrl: `https://i.pravatar.cc/150?u=john` },
-  { id: 'USR-004', name: 'Alice Wonderland', email: 'alice@shiftedos.com', role: 'Manager', roleName: 'Project Manager', avatarUrl: `https://i.pravatar.cc/150?u=alice` },
-];
-
-const MOCK_ROLES_LIST: Role[] = [
-    { id: 'ROLE-001', name: 'System Administrator', description: 'Manages the entire ShiftedOS platform.' },
-    { id: 'ROLE-002', name: 'Project Manager', description: 'Oversees projects and timelines.' },
-    { id: 'ROLE-003', name: 'Lead Designer', description: 'Responsible for UI/UX design leadership.' },
-    { id: 'ROLE-004', name: 'Senior Developer', description: 'Leads development efforts.' },
-    { id: 'ROLE-005', name: 'Content Creator', description: 'Creates and manages content.' },
-];
+// MOCK DATA - Kept for reference but not used for initial state anymore
+const MOCK_ADMIN_USER: User = { id: 'USR-001', name: 'Admin User', email: 'admin@shiftedos.com', role: 'Administrator', roleName: 'System Administrator', bio: 'Overseeing the ShiftedOS platform...', avatarUrl: undefined };
+const MOCK_USERS_LIST: User[] = [ MOCK_ADMIN_USER, { id: 'USR-002', name: 'Jane Doe', email: 'jane@shiftedos.com', role: 'Designer', roleName: 'Lead Designer', avatarUrl: `https://i.pravatar.cc/150?u=jane` }, { id: 'USR-003', name: 'John Smith', email: 'john@shiftedos.com', role: 'Developer', roleName: 'Senior Developer', avatarUrl: `https://i.pravatar.cc/150?u=john` }, { id: 'USR-004', name: 'Alice Wonderland', email: 'alice@shiftedos.com', role: 'Manager', roleName: 'Project Manager', avatarUrl: `https://i.pravatar.cc/150?u=alice` },];
+const MOCK_ROLES_LIST: Role[] = [ { id: 'ROLE-001', name: 'System Administrator', description: 'Manages the entire ShiftedOS platform.' }, { id: 'ROLE-002', name: 'Project Manager', description: 'Oversees projects and timelines.' }, { id: 'ROLE-003', name: 'Lead Designer', description: 'Responsible for UI/UX design leadership.' }, { id: 'ROLE-004', name: 'Senior Developer', description: 'Leads development efforts.' }, { id: 'ROLE-005', name: 'Content Creator', description: 'Creates and manages content.' },];
 
 
 const App: React.FC = () => {
+  // --- STATE DECLARATIONS ---
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | undefined>(undefined);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [activeView, setActiveView] = useState<string>('dashboard');
+  const [isLoading, setIsLoading] = useState<boolean>(true); // For loading indicators
 
-  const [projects, setProjects] = useState<Project[]>(initialProjectsData);
+  // --- Initialize state with empty arrays ---
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [newProject, setNewProject] = useState<Partial<Project>>({
-    name: '', description: '', status: ProjectStatus.PLANNING,
-  });
+  const [newProject, setNewProject] = useState<Partial<Project>>({ name: '', description: '', status: ProjectStatus.PLANNING });
   const [isSavingProject, setIsSavingProject] = useState<boolean>(false);
   const [projectError, setProjectError] = useState<string | null>(null);
 
-
-  const [tasks, setTasks] = useState<Task[]>(initialTasksData);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [newTask, setNewTask] = useState<Partial<Task>>({
-    title: '', description: '', status: TaskStatus.TODO, divisionTag: DIVISION_OPTIONS[0], contentPillarTag: CONTENT_PILLAR_OPTIONS[CONTENT_PILLAR_OPTIONS.length -1], projectId: '', assignee: '',
-  });
+  const [newTask, setNewTask] = useState<Partial<Task>>({ title: '', description: '', status: TaskStatus.TODO, divisionTag: DIVISION_OPTIONS[0], contentPillarTag: CONTENT_PILLAR_OPTIONS[CONTENT_PILLAR_OPTIONS.length - 1], projectId: '', assignee: '' });
   const [isSavingTask, setIsSavingTask] = useState<boolean>(false);
   const [taskError, setTaskError] = useState<string | null>(null);
 
@@ -121,6 +80,102 @@ const App: React.FC = () => {
   const [profileError, setProfileError] = useState<string | null>(null);
 
 
+  // --- DATA FETCHING ---
+  useEffect(() => {
+    // This hook runs whenever the user's authentication state changes
+    if (isAuthenticated && currentUser) {
+      setIsLoading(true);
+      const fetchAllData = async () => {
+        try {
+          // Fetch both projects and tasks from Firestore at the same time
+          const projectsQuery = getDocs(collection(db, "projects"));
+          const tasksQuery = getDocs(collection(db, "tasks"));
+          const [projectsSnapshot, tasksSnapshot] = await Promise.all([projectsQuery, tasksQuery]);
+
+          // Convert the Firestore documents into usable lists of objects
+          const projectsList = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[];
+          const tasksList = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Task[];
+
+          // Update the application's state with the live data
+          setProjects(projectsList);
+          setTasks(tasksList);
+        } catch (error) {
+          console.error("Failed to fetch initial data:", error);
+          addNotification({ type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Could not load workspace data." });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchAllData();
+    } else {
+        // If user logs out, clear the data
+        setProjects([]);
+        setTasks([]);
+    }
+  }, [isAuthenticated, currentUser]); // Dependency array ensures this runs only when the user logs in or out
+
+
+  // --- AUTHENTICATION ---
+  const handleLogin = async (email: string, pass: string) => {
+    setIsLoggingIn(true);
+    setLoginError(undefined);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const firebaseUser = userCredential.user;
+
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        setCurrentUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: userData.name,
+          roleName: userData.roleName,
+          bio: userData.bio,
+          avatarUrl: userData.avatarUrl,
+        } as User);
+        setIsAuthenticated(true);
+        setActiveView('dashboard');
+        addNotification({
+          type: NotificationType.GENERAL_INFO,
+          iconType: NotificationIconType.BELL,
+          message: `Welcome back, ${userData.name || 'User'}!`,
+        });
+      } else {
+        await signOut(auth); // Log out the user if their DB profile is missing
+        throw new Error("User profile not found in database.");
+      }
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        setLoginError('Invalid email or password.');
+      } else {
+        setLoginError(error.message);
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setActiveView('dashboard');
+      setSelectedProjectId(null);
+      setNotifications([]);
+    } catch (error) {
+        console.error("Logout failed:", error);
+        addNotification({type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Logout failed."});
+    }
+  };
+
+  
+  // --- NOTIFICATIONS ---
   const addNotification = useCallback((notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notificationData,
@@ -141,62 +196,36 @@ const App: React.FC = () => {
 
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
 
-  const handleLogin = async (email: string, pass: string) => {
-    setIsLoggingIn(true);
-    setLoginError(undefined);
-    await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY)); // Simulate API call
 
-    const userToLogin = MOCK_USERS_LIST.find(u => u.email === email);
-    if (userToLogin && pass === 'password') {
-      setIsAuthenticated(true);
-      setCurrentUser(userToLogin);
-      setActiveView('dashboard');
-      addNotification({
-        type: NotificationType.GENERAL_INFO,
-        iconType: NotificationIconType.BELL,
-        message: `Welcome back, ${userToLogin.name}!`,
-      });
-    } else {
-      setLoginError('Invalid email or password.');
-    }
-    setIsLoggingIn(false);
-  };
-
-  const handleLogout = async () => {
-    // Simulate API call for logout if necessary
-    await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY / 2));
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setActiveView('dashboard');
-    setSelectedProjectId(null);
-    setNotifications([]);
-  };
-
+  // --- PLACEHOLDER FUNCTIONS (To be implemented later) ---
   const handleUpdateUserProfile = async (updatedProfile: Partial<User>) => {
-    if (currentUser) {
-      setIsUpdatingProfile(true);
-      setProfileError(null);
-      await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY)); // Simulate API call
-      try {
-        // Simulate potential API error
-        // if (Math.random() < 0.2) throw new Error("Failed to update profile. Please try again.");
-
-        const updatedUser = { ...currentUser, ...updatedProfile } as User;
-        setCurrentUser(updatedUser);
-        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-        addNotification({
-          type: NotificationType.GENERAL_INFO,
-          iconType: NotificationIconType.USER_CIRCLE,
-          message: 'Your profile has been updated.',
-        });
-      } catch (error: any) {
-        setProfileError(error.message || "An unexpected error occurred.");
-      } finally {
-        setIsUpdatingProfile(false);
-      }
-    }
+    console.log("TODO: Implement user profile update", updatedProfile);
+    alert("Profile update functionality is not yet connected.");
   };
+  const handleSaveProject = async () => {
+    console.log("TODO: Implement project save", newProject);
+    alert("Creating/saving projects is not yet connected.");
+  };
+  const handleDeleteProject = async (projectIdToDelete: string) => {
+    console.log("TODO: Implement project delete", projectIdToDelete);
+    alert("Deleting projects is not yet connected.");
+  };
+  const handleSaveTask = async () => {
+    console.log("TODO: Implement task save", newTask);
+    alert("Creating/saving tasks is not yet connected.");
+  };
+  const handleDeleteTask = async (taskId: string) => {
+    console.log("TODO: Implement task delete", taskId);
+    alert("Deleting tasks is not yet connected.");
+  };
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => {
+    console.log(`TODO: Implement status update for task ${taskId} to ${newStatus}`);
+    alert("Updating task status is not yet connected.");
+  };
+  
 
+  // --- UTILITY AND RENDER PREPARATION FUNCTIONS (No changes needed below this line) ---
+  
   const handleProjectInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewProject(prev => ({ ...prev, [name]: value }));
@@ -220,65 +249,6 @@ const App: React.FC = () => {
     setNewProject({ name: '', description: '', status: ProjectStatus.PLANNING });
     setProjectError(null);
   }, []);
-
-  const handleSaveProject = async () => {
-    if (!newProject.name) {
-      setProjectError("Project Name is required.");
-      return;
-    }
-    setIsSavingProject(true);
-    setProjectError(null);
-    await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY));
-
-    try {
-      // if (Math.random() < 0.2) throw new Error("Simulated API error: Could not save project.");
-      const now = new Date().toISOString();
-      if (editingProject) {
-        const updatedProject = { ...editingProject, ...newProject, updatedAt: now } as Project;
-        setProjects(prevProjects => prevProjects.map(p => p.id === editingProject.id ? updatedProject : p));
-        addNotification({
-          type: NotificationType.PROJECT_UPDATED, iconType: NotificationIconType.PROJECT,
-          message: `Project "${updatedProject.name.substring(0,20)}..." updated.`,
-          relatedItemId: updatedProject.id, relatedItemType: 'project'
-        });
-      } else {
-        const projectToAdd: Project = {
-          id: `PROJ-${String(Date.now()).slice(-4)}`, createdAt: now, updatedAt: now, ...newProject,
-        } as Project;
-        setProjects(prevProjects => [projectToAdd, ...prevProjects]);
-        addNotification({
-          type: NotificationType.PROJECT_CREATED, iconType: NotificationIconType.PROJECT,
-          message: `New project "${projectToAdd.name.substring(0,20)}..." created.`,
-          relatedItemId: projectToAdd.id, relatedItemType: 'project'
-        });
-      }
-      handleCloseProjectModal();
-    } catch (error: any) {
-      setProjectError(error.message || "An unexpected error occurred saving the project.");
-    } finally {
-      setIsSavingProject(false);
-    }
-  };
-
-  const handleDeleteProject = async (projectIdToDelete: string) => {
-    if (window.confirm("Are you sure you want to delete this project and all its tasks? This action cannot be undone.")) {
-      // Simulate API call for deletion
-      await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY));
-      const projectToDelete = projects.find(p => p.id === projectIdToDelete);
-      setProjects(prevProjects => prevProjects.filter(p => p.id !== projectIdToDelete));
-      setTasks(prevTasks => prevTasks.filter(t => t.projectId !== projectIdToDelete));
-      if (selectedProjectId === projectIdToDelete) {
-        setSelectedProjectId(null);
-      }
-      if (projectToDelete) {
-        addNotification({
-          type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.EXCLAMATION_TRIANGLE,
-          message: `Project "${projectToDelete.name.substring(0,20)}..." and its tasks were deleted.`,
-        });
-      }
-    }
-  };
-
 
   const handleTaskInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -325,127 +295,6 @@ const App: React.FC = () => {
     setTaskError(null);
   }, []);
 
-  const handleSaveTask = async () => {
-    if (!newTask.title || !newTask.projectId) {
-      setTaskError("Title and Project are required for a task.");
-      return;
-    }
-    setIsSavingTask(true);
-    setTaskError(null);
-    await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY));
-
-    try {
-      // if (Math.random() < 0.2) throw new Error("Simulated API error: Could not save task.");
-      const now = new Date().toISOString();
-      let assignedUserName = newTask.assignee;
-
-      if (editingTask) {
-        const updatedTask = { ...editingTask, ...newTask, assignee: assignedUserName, updatedAt: now } as Task;
-        setTasks(prevTasks => prevTasks.map(t => t.id === editingTask.id ? updatedTask : t));
-
-        if (editingTask.status !== updatedTask.status) {
-          addNotification({
-            type: NotificationType.STATUS_CHANGED, iconType: NotificationIconType.BELL,
-            message: `Task "${updatedTask.title.substring(0,20)}..." status changed to ${updatedTask.status}.`,
-            relatedItemId: updatedTask.id, relatedItemType: 'task'
-          });
-        }
-        if (updatedTask.status === TaskStatus.PUBLISHED && editingTask.status !== TaskStatus.PUBLISHED) {
-          addNotification({
-            type: NotificationType.TASK_COMPLETED, iconType: NotificationIconType.CHECK_CIRCLE,
-            message: `Task "${updatedTask.title.substring(0,20)}..." has been published!`,
-            relatedItemId: updatedTask.id, relatedItemType: 'task'
-          });
-        }
-        if (editingTask.assignee !== updatedTask.assignee && updatedTask.assignee) {
-          addNotification({
-              type: NotificationType.TASK_ASSIGNED, iconType: NotificationIconType.USER_CIRCLE,
-              message: `Task "${updatedTask.title.substring(0,15)}..." assigned to ${updatedTask.assignee}.`,
-              relatedItemId: updatedTask.id, relatedItemType: 'task'
-          });
-        }
-      } else {
-        const taskToAdd: Task = {
-          id: `SP-${String(Date.now()).slice(-4)}`, ...newTask,
-          assignee: assignedUserName, createdAt: now, updatedAt: now,
-        } as Task;
-        setTasks(prevTasks => [taskToAdd, ...prevTasks]);
-        addNotification({
-          type: NotificationType.TASK_CREATED, iconType: NotificationIconType.PLUS_CIRCLE,
-          message: `New task "${taskToAdd.title.substring(0,20)}..." created.`,
-          relatedItemId: taskToAdd.id, relatedItemType: 'task'
-        });
-        if (taskToAdd.assignee) {
-          addNotification({
-              type: NotificationType.TASK_ASSIGNED, iconType: NotificationIconType.USER_CIRCLE,
-              message: `Task "${taskToAdd.title.substring(0,15)}..." assigned to ${taskToAdd.assignee}.`,
-              relatedItemId: taskToAdd.id, relatedItemType: 'task'
-          });
-        }
-      }
-      handleCloseTaskModal();
-    } catch (error: any) {
-      setTaskError(error.message || "An unexpected error occurred saving the task.");
-    } finally {
-      setIsSavingTask(false);
-    }
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-        await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY)); // Simulate API call
-        const taskToDelete = tasks.find(t => t.id === taskId);
-        setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
-         if (taskToDelete) {
-           addNotification({
-            type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.EXCLAMATION_TRIANGLE,
-            message: `Task "${taskToDelete.title.substring(0,20)}..." was deleted.`,
-          });
-        }
-    }
-  };
-
-  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => {
-    const taskToUpdate = tasks.find(t => t.id === taskId);
-    if (taskToUpdate) {
-      // Optimistic update:
-      const oldTasks = tasks;
-      const updatedTaskOptimistic = { ...taskToUpdate, status: newStatus, updatedAt: new Date().toISOString() };
-      setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? updatedTaskOptimistic : t));
-
-      await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY)); // Simulate API call
-      try {
-        // if (Math.random() < 0.2) throw new Error("Failed to update task status."); // Simulate error
-
-        // If API call successful, notification logic:
-        let notificationMessage = `Task "${updatedTaskOptimistic.title.substring(0,20)}..." status updated to ${newStatus}.`;
-        let iconType = NotificationIconType.BELL;
-
-        if (newStatus === TaskStatus.IN_REVIEW) {
-          notificationMessage = `Task "${updatedTaskOptimistic.title.substring(0,20)}..." is now In Review.`;
-          iconType = NotificationIconType.EYE;
-        } else if (newStatus === TaskStatus.PUBLISHED) {
-          notificationMessage = `Task "${updatedTaskOptimistic.title.substring(0,20)}..." has been Approved & Published!`;
-          iconType = NotificationIconType.CHECK_CIRCLE;
-        } else if (newStatus === TaskStatus.IN_PROGRESS && taskToUpdate.status === TaskStatus.IN_REVIEW) {
-          notificationMessage = `Changes requested for task "${updatedTaskOptimistic.title.substring(0,20)}...". Back to In Progress.`;
-          iconType = NotificationIconType.EXCLAMATION_TRIANGLE;
-        }
-        addNotification({
-          type: NotificationType.STATUS_CHANGED, iconType: iconType, message: notificationMessage,
-          relatedItemId: taskId, relatedItemType: 'task'
-        });
-      } catch (error) {
-        // Revert UI on error
-        setTasks(oldTasks);
-        addNotification({
-          type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.EXCLAMATION_TRIANGLE,
-          message: `Failed to update status for "${taskToUpdate.title.substring(0,20)}...".`,
-        });
-      }
-    }
-  };
-
   const getTasksForSelectedProject = useCallback(() => {
     if (!selectedProjectId) return [];
     return tasks.filter(task => task.projectId === selectedProjectId);
@@ -460,6 +309,14 @@ const App: React.FC = () => {
 
 
   const renderContent = () => {
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p className="text-xl text-text-secondary animate-pulse">Loading Workspace...</p>
+            </div>
+        );
+    }
+    // ... (The rest of your renderContent function is fine and doesn't need changes)
     switch (activeView) {
       case 'dashboard':
         const activeProjectsCount = projects.filter(p => p.status === ProjectStatus.ACTIVE).length;
@@ -557,7 +414,7 @@ const App: React.FC = () => {
                       project={project}
                       onViewTasks={() => setSelectedProjectId(project.id)}
                       onEdit={() => handleOpenProjectModal(project)}
-                      onDelete={handleDeleteProject}
+                      onDelete={() => handleDeleteProject(project.id)}
                     />
                   ))}
                 </div>
@@ -617,12 +474,6 @@ const App: React.FC = () => {
     if (activeView === 'tasks') {
       return selectedProjectId ? () => handleOpenTaskModal() : () => handleOpenProjectModal();
     }
-    if (activeView === 'assets') {
-      return undefined;
-    }
-    if (['dashboard', 'team', 'analytics', 'finance', 'crm', 'knowledge', 'okr', 'reports', 'profile'].includes(activeView)) {
-        return undefined;
-    }
     return undefined;
   };
 
@@ -647,12 +498,7 @@ const App: React.FC = () => {
   const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
   const toggleDesktopSidebarCollapse = () => setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      setActiveView('dashboard');
-    }
-  }, [isAuthenticated]);
-
+  
   if (!isAuthenticated) {
     return <LandingPage onLogin={handleLogin} loginError={loginError} isLoading={isLoggingIn} />;
   }
