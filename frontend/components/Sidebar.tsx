@@ -15,7 +15,7 @@ import ReportIcon from './icon/ReportIcon';
 import AdminIcon from './icon/AdminIcon';
 import LogoutIcon from './icon/LogoutIcon';
 import ShiftedOSLogoIcon from './icon/ShiftedOSLogoIcon';
-
+//test
 // Define the props that this component receives from App.tsx
 interface SidebarProps {
   activeView: string;
