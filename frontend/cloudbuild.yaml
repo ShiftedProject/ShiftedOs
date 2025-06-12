@@ -1,15 +1,11 @@
-# frontend/cloudbuild.yaml
-
 steps:
   # Step 1: Install all frontend dependencies.
-  # The 'dir' property tells Cloud Build to run this command inside the /frontend directory.
   - name: 'gcr.io/cloud-builders/npm'
     args: ['install']
     dir: 'frontend'
     id: 'InstallDependencies'
 
   # Step 2: Create the .env file and then build the application.
-  # This step also runs inside the /frontend directory.
   - name: 'gcr.io/cloud-builders/npm'
     dir: 'frontend'
     id: 'BuildApp'
@@ -32,8 +28,7 @@ steps:
       - '_FIREBASE_MESSAGING_SENDER_ID'
       - '_FIREBASE_APP_ID'
 
-  # Step 3: Deploy the built files to Google Cloud Storage.
-  # The source path is now correctly pointing to 'frontend/dist'.
+  # Step 3: Deploy the built files to your website bucket.
   - name: 'gcr.io/cloud-builders/gsutil'
     args:
       - '-m'
@@ -41,11 +36,10 @@ steps:
       - '-r'
       - '-c'
       - '-d'
-      - 'frontend/dist' # This is the corrected source path
-      - 'gs://shifted-project-os-deployment-website'
+      - 'frontend/dist'
+      - 'gs://shifted-project-os-deployment'
     id: 'DeployToGCS'
 
-# This section maps secrets from Secret Manager to variables for the build step.
 availableSecrets:
   secretManager:
     - versionName: projects/shifted-project-os-deployment/secrets/firebase-api-key/versions/latest
@@ -62,3 +56,9 @@ availableSecrets:
       env: '_FIREBASE_APP_ID'
 
 timeout: '1200s'
+
+# --- ADDED SECTION ---
+# This explicitly tells Cloud Build where to store logs, bypassing the trigger error.
+logsBucket: 'gs://logs-for-shifted-project-os-deployment'
+options:
+  logging: GCS_ONLY
