@@ -8,7 +8,6 @@ import { auth, db } from './src/firebase'; // This imports the connection you se
 // Component Imports
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import TaskCard from './components/TaskCard';
 import ProjectCard from './components/ProjectCard';
 import Modal from './components/Modal';
 import Button from './components/Button';
@@ -34,12 +33,11 @@ import BellIcon from './components/icons/BellIcon';
 import FolderIcon from './components/icons/FolderIcon';
 
 // Type and Constant Imports
-import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, Asset, AssetType, Role, ThemeColors, UserRole, AnalyticsConfig, TaskPriority } from './types';
-import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, ASSET_TYPE_OPTIONS, TASK_PRIORITY_OPTIONS } from './constants';
+import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, AssetType, Role, ThemeColors, UserRole, AnalyticsConfig, TaskPriority } from './types';
+import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, TASK_PRIORITY_OPTIONS } from './constants';
 
 
-// MOCK DATA - Kept for dropdowns and reference, but not for initial state
-const MOCK_ADMIN_USER: User = { id: 'USR-001', name: 'Admin User', email: 'admin@shiftedos.com', role: UserRole.ADMIN, roleName: 'System Administrator', bio: 'Overseeing the ShiftedOS platform.', avatarUrl: undefined };
+// MOCK DATA - Kept for non-Firestore dropdowns and reference
 const MOCK_ROLES_LIST: Role[] = [ { id: 'ROLE-001', name: 'Admin', description: 'Manages the entire ShiftedOS platform.' }, { id: 'ROLE-002', name: 'Editor', description: 'Oversees projects, tasks, and content quality.' }, { id: 'ROLE-003', name: 'Script Writer', description: 'Focuses on creating and managing task content, especially scripts.' }, { id: 'ROLE-004', name: 'Viewer', description: 'Has read-only access to most platform data.' }, { id: 'ROLE-005', name: 'Finance', description: 'Manages financial data and budgeting.' }, { id: 'ROLE-006', name: 'Project Manager', description: 'Manages projects, timelines, and team assignments.' },];
 const DEFAULT_THEME: ThemeColors = { mainBackground: '#F5ECE0', glassBg: 'rgba(255, 255, 255, 0.35)', mainAccent: '#336D82', secondaryAccent: '#5F99AE', highlight: '#693382', textPrimary: '#1F2937', textSecondary: '#6B7280',};
 const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfig = { metricVisibility: { activeProjects: true, tasksCompleted: true, totalContentViews: true, teamEngagement: true, }, chartType: 'Bar Chart',};
@@ -53,34 +51,25 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   const [activeView, setActiveView] = useState<string>('dashboard'); 
-  const [isLoading, setIsLoading] = useState<boolean>(true); // For loading indicators
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // --- CHANGE 2: Initialize state with empty arrays, not mock data ---
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  
+  const [users, setUsers] = useState<User[]>([]);
+
+  // The rest of the state declarations
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [newProject, setNewProject] = useState<Partial<Project>>({ name: '', description: '', status: ProjectStatus.PLANNING, budget: 0, proofOfWorkUrl: '' });
-  const [isSavingProject, setIsSavingProject] = useState<boolean>(false);
-  const [projectError, setProjectError] = useState<string | null>(null);
-
   const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTask, setNewTask] = useState<Partial<Task>>({ title: '', description: '', status: TaskStatus.TODO, divisionTag: DIVISION_OPTIONS[0], contentPillarTag: CONTENT_PILLAR_OPTIONS[CONTENT_PILLAR_OPTIONS.length -1], projectId: '', assignee: '', priority: TaskPriority.MEDIUM });
-  const [isSavingTask, setIsSavingTask] = useState<boolean>(false);
-  const [taskError, setTaskError] = useState<string | null>(null);
-  
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [roles, setRoles] = useState<Role[]>(MOCK_ROLES_LIST);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(false);
-
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [users, setUsers] = useState<User[]>([]); // This will be populated from Firestore
-  const [roles, setRoles] = useState<Role[]>(MOCK_ROLES_LIST); // Roles can remain mock for now
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  
   const [currentTheme, setCurrentTheme] = useState<ThemeColors>(DEFAULT_THEME);
   const [analyticsConfig, setAnalyticsConfig] = useState<AnalyticsConfig>(DEFAULT_ANALYTICS_CONFIG);
 
@@ -91,7 +80,8 @@ const App: React.FC = () => {
     if (isAuthenticated && currentUser) {
       setIsLoading(true);
       
-      const fetchAllData = async () => {
+      // This function fetches data that doesn't need to be real-time
+      const fetchStaticData = async () => {
         try {
           const projectsQuery = getDocs(collection(db, "projects"));
           const usersQuery = getDocs(collection(db, "users"));
@@ -105,112 +95,144 @@ const App: React.FC = () => {
           setUsers(usersList);
 
         } catch (error) {
-          console.error("Failed to fetch initial data:", error);
-          addNotification({ type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Could not load workspace data." });
+          console.error("Failed to fetch static data:", error);
+          addNotification({ type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Could not load projects or user data." });
         }
       };
 
-      // Set up a real-time listener for tasks collection
+      // Set up a real-time listener for the tasks collection for live updates
       const tasksQuery = collection(db, "tasks");
       const unsubscribeTasks = onSnapshot(tasksQuery, (querySnapshot) => {
         const tasksList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Task[];
         setTasks(tasksList);
-        setIsLoading(false); // We consider loading finished after the first real-time update
+        setIsLoading(false); // We consider loading finished after the first real-time update of tasks
       }, (error) => {
         console.error("Error listening to tasks:", error);
+        addNotification({ type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Could not load tasks." });
         setIsLoading(false);
       });
 
-      fetchAllData();
+      fetchStaticData();
 
-      // Clean up the listener when the component unmounts or user logs out
+      // This is a cleanup function. It runs when the user logs out.
       return () => unsubscribeTasks();
     } else {
-        // If user logs out, clear all data and set loading to false
+        // If user logs out, clear all data
         setProjects([]);
         setTasks([]);
         setUsers([]);
-        setIsLoading(false);
     }
   }, [isAuthenticated, currentUser]);
 
 
   // --- CHANGE 4: Replace mock authentication with real Firebase Auth ---
   const handleLogin = async (email: string, pass: string) => {
-    setIsLoggingIn(true);
-    setLoginError(undefined);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      const firebaseUser = userCredential.user;
+  setIsLoggingIn(true);
+  setLoginError(undefined);
 
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    const firebaseUser = userCredential.user;
 
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        // Set the current user from the combination of Auth and Firestore data
-        setCurrentUser({
-          id: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          name: userData.name,
-          role: userData.role, // Make sure 'role' field exists in your Firestore user doc
-          roleName: userData.roleName,
-          bio: userData.bio,
-          avatarUrl: userData.avatarUrl,
-        } as User);
-        setIsAuthenticated(true);
-        setActiveView('dashboard');
-        addNotification({
-          type: NotificationType.GENERAL_INFO,
-          iconType: NotificationIconType.BELL,
-          message: `Welcome back, ${userData.name || 'User'}!`,
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data();
+
+      setCurrentUser({
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: userData.name,
+        roleName: userData.roleName,
+        bio: userData.bio,
+        avatarUrl: userData.avatarUrl,
+      } as User);
+
+      // 🔥 Get Firebase ID token
+      const idToken = await firebaseUser.getIdToken();
+
+      // 🛰️ Send it to backend
+      try {
+        const res = await fetch("http://localhost:8080/api/tasks", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json'
+          }
         });
-      } else {
-        await signOut(auth);
-        throw new Error("User profile not found in database. Please contact an admin.");
+
+        if (!res.ok) {
+          console.error("Backend error:", res.statusText);
+        } else {
+          const backendData = await res.json();
+          console.log("Backend response:", backendData);
+        }
+      } catch (backendError) {
+        console.error("Failed to fetch from backend:", backendError);
       }
-    } catch (error: any) {
-      console.error("Login failed:", error);
-      if (error.code === 'auth/invalid-credential') {
-        setLoginError('Invalid email or password.');
-      } else {
-        setLoginError('An unknown error occurred during login.');
-      }
-    } finally {
-      setIsLoggingIn(false);
+
+      // ✅ Continue flow
+      setIsAuthenticated(true);
+      setActiveView('dashboard');
+
+      addNotification({
+        type: NotificationType.GENERAL_INFO,
+        iconType: NotificationIconType.BELL,
+        message: `Welcome back, ${userData.name || 'User'}!`,
+      });
+
+    } else {
+      await signOut(auth);
+      throw new Error("User profile not found in database.");
     }
-  };
+
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    if (
+      error.code === 'auth/invalid-credential' ||
+      error.code === 'auth/wrong-password' ||
+      error.code === 'auth/user-not-found'
+    ) {
+      setLoginError('Invalid email or password.');
+    } else {
+      setLoginError(error.message);
+    }
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
+
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // Reset all state on logout
       setIsAuthenticated(false);
       setCurrentUser(null);
-      setActiveView('dashboard'); 
-      setSelectedProjectId(null); 
+      setActiveView('dashboard');
+      setSelectedProjectId(null);
       setNotifications([]);
     } catch (error) {
-        console.error("Logout failed:", error);
-        addNotification({type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Logout failed."});
+      console.error("Logout failed:", error);
+      addNotification({type: NotificationType.ERROR, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "Logout failed."});
     }
   };
 
+  
+  // --- CHANGE 5: Temporarily disable all "write" functions by showing an alert ---
+  const handleUpdateUserProfile = async (updatedProfile: Partial<User>) => alert("Feature not connected yet: Update User Profile");
+  const handleSaveProject = async () => alert("Feature not connected yet: Save Project");
+  const handleDeleteProject = async (projectIdToDelete: string) => alert("Feature not connected yet: Delete Project");
+  const handleSaveTask = async () => alert("Feature not connected yet: Save Task");
+  const handleDeleteTask = async (taskId: string) => alert("Feature not connected yet: Delete Task");
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => alert("Feature not connected yet: Update Task Status");
+  const handleAddNewUser = async (name: string, email: string, role: UserRole, pass: string) => { alert("Feature not connected yet: Add New User"); return false; };
+  const handleEditUserRole = async (userId: string, newRole: UserRole) => alert("Feature not connected yet: Edit User Role");
+  
 
-  // --- CHANGE 5: Temporarily disable all "write" functions ---
-  const handleSaveProject = async () => alert("Creating/saving projects is not connected yet.");
-  const handleDeleteProject = async (id: string) => alert("Deleting projects is not connected yet.");
-  const handleSaveTask = async () => alert("Creating/saving tasks is not connected yet.");
-  const handleDeleteTask = async (id: string) => alert("Deleting tasks is not connected yet.");
-  const handleUpdateTaskStatus = async (id: string, status: TaskStatus) => alert("Updating task status is not connected yet.");
-  const handleUpdateUserProfile = async (profile: Partial<User>) => alert("Updating user profiles is not connected yet.");
-  const handleAddNewUser = async (name: string, email: string, role: UserRole, pass: string) => { alert("Adding new users is not connected yet."); return false; };
-  const handleEditUserRole = async (userId: string, newRole: UserRole) => alert("Editing user roles is not connected yet.");
-
-
-  // --- The rest of the file remains largely the same, using the live data now ---
-  // (No changes needed to the functions below for our current goal)
-
+  // --- The rest of your file (utility functions and JSX) remains largely the same. ---
+  // --- It will now use the live data from the 'projects', 'tasks', and 'currentUser' state. ---
+  
   const addNotification = useCallback((notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = { ...notificationData, id: `NTF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, timestamp: new Date().toISOString(), read: false, };
     setNotifications(prev => [newNotification, ...prev].slice(0, 50));
@@ -227,8 +249,8 @@ const App: React.FC = () => {
 
   const handleOpenProjectModal = (projectToEdit?: Project) => {
     if (currentUser?.role !== UserRole.ADMIN && currentUser?.role !== UserRole.EDITOR && currentUser?.role !== UserRole.PROJECT_MANAGER) {
-      addNotification({type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "You don't have permission to manage projects."});
-      return;
+        addNotification({type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.EXCLAMATION_TRIANGLE, message: "You don't have permission to manage projects."});
+        return;
     }
     setProjectError(null);
     if (projectToEdit) {
@@ -275,13 +297,10 @@ const App: React.FC = () => {
   const handleAssetNotification = useCallback((message: string, assetType: AssetType) => { addNotification({ type: NotificationType.ASSET_CREATED, iconType: NotificationIconType.FOLDER, message: message, relatedItemType: 'asset', }); }, [addNotification]);
   
   const renderContent = () => {
-    if (!isAuthenticated && !isLoggingIn) {
-      return <LandingPage onLogin={handleLogin} onQuickLoginAsRole={() => {}} loginError={loginError} isLoading={isLoggingIn} />;
-    }
     if (isLoading || isLoggingIn) {
         return <div className="flex justify-center items-center h-full"><p className="text-xl text-text-secondary animate-pulse">Loading Workspace...</p></div>;
     }
-    // ... (rest of renderContent is unchanged)
+    
     switch (activeView) {
       case 'dashboard':
         const activeProjectsCount = projects.filter(p => p.status === ProjectStatus.ACTIVE).length;
@@ -324,13 +343,14 @@ const App: React.FC = () => {
   const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
   const toggleDesktopSidebarCollapse = () => setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed);
 
+  const handleLoginAsRole = (role: UserRole) => { /* Mock function, no longer needed */ };
+  
   if (!isAuthenticated) {
     return ( <LandingPage onLogin={handleLogin} onQuickLoginAsRole={handleLoginAsRole} loginError={loginError} isLoading={isLoggingIn} /> );
   }
   
   const userOptionsForTaskModal = users.filter(user => user.role !== UserRole.VIEWER).map(user => ({ value: user.name, label: `${user.name} (${user.role})` }));
-  const getTaskStatusOptionsForCurrentUser = (task?: Task | null): {value: TaskStatus, label: string}[] => { if (!currentUser) return []; if ([UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER].includes(currentUser.role)) { return TASK_STATUS_OPTIONS.map(s => ({value: s, label: s})); } if (currentUser.role === UserRole.SCRIPT_WRITER) { if (task && (task.status === TaskStatus.DONE || task.status === TaskStatus.PUBLISHED)) { return [{value: task.status, label: task.status}]; } return [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW, TaskStatus.BLOCKED].map(s => ({value: s, label: s})); } if (currentUser.role === UserRole.FINANCE && task && task.assignee === currentUser.name) { if (task && (task.status === TaskStatus.DONE || task.status === TaskStatus.PUBLISHED)) { return [{value: task.status, label: task.status}]; } return [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.DONE].map(s => ({value: s, label: s})); } return task ? [{value: task.status, label: task.status}] : []; };
-
+  const getTaskStatusOptionsForCurrentUser = (task?: Task | null): {value: TaskStatus, label: string}[] => { if (!currentUser) return []; if ([UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER].includes(currentUser.role)) { return TASK_STATUS_OPTIONS.map(s => ({value: s, label: s})); } if (currentUser.role === UserRole.SCRIPT_WRITER) { if (task && (task.status === TaskStatus.DONE || task.status === TaskStatus.PUBLISHED)) { return [{value: task.status, label: task.status}]; } return [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW, TaskS.BLOCKED].map(s => ({value: s, label: s})); } if (currentUser.role === UserRole.FINANCE && task && task.assignee === currentUser.name) { if (task && (task.status === TaskStatus.DONE || task.status === TaskStatus.PUBLISHED)) { return [{value: task.status, label: task.status}]; } return [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED, TaskStatus.DONE].map(s => ({value: s, label: s})); } return task ? [{value: task.status, label: task.status}] : []; };
 
   return (
     <div className="flex h-screen bg-main-background text-text-primary overflow-hidden">
@@ -362,6 +382,10 @@ const App: React.FC = () => {
         </main>
       </div>
       {/* Modals are left here for future wiring */}
+      {/* Task Modal is very long, so it's omitted for brevity but would go here */}
+      {/* Project Modal is very long, so it's omitted for brevity but would go here */}
     </div>
   );
 };
+
+export default App;
