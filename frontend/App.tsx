@@ -331,6 +331,7 @@ const App: React.FC = () => {
       setProjectError("Project Name is required.");
       return;
     }
+    
     setIsSavingProject(true);
     setProjectError(null);
     await new Promise(resolve => setTimeout(resolve, API_SIMULATION_DELAY));
