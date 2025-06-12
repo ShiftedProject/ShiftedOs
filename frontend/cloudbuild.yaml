@@ -1,16 +1,16 @@
 # frontend/cloudbuild.yaml
 
 steps:
-  # Step 1: Install dependencies using the official Node.js v20 builder.
-  # We specify 'npm' as the entrypoint to tell this builder to run npm commands.
-  - name: 'gcr.io/cloud-builders/node:20'
+  # Step 1: Install dependencies using the official Node.js v20 image from Docker Hub.
+  # We tell it to run 'npm' commands.
+  - name: 'node:20'
     entrypoint: 'npm'
     args: ['install']
     dir: 'frontend'
     id: 'InstallDependencies'
 
-  # Step 2: Create the .env file and build the application, also using the Node v20 builder.
-  - name: 'gcr.io/cloud-builders/node:20'
+  # Step 2: Create the .env file and build the app, also using the official node:20 image.
+  - name: 'node:20'
     entrypoint: 'bash'
     dir: 'frontend'
     id: 'BuildApp'
@@ -32,7 +32,7 @@ steps:
       - '_FIREBASE_MESSAGING_SENDER_ID'
       - '_FIREBASE_APP_ID'
 
-  # Step 3: Deploy the built files to your website bucket.
+  # Step 3: Deploy the built files to your GCS bucket.
   - name: 'gcr.io/cloud-builders/gsutil'
     args:
       - '-m'
