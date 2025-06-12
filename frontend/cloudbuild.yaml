@@ -1,38 +1,54 @@
-# This file must be located at: frontend/cloudbuild.yaml
+# frontend/cloudbuild.yaml
 
 steps:
-  # Step 1: Tell Cloud Build to run 'npm install' inside the 'frontend' directory.
+  # Step 1: Install all frontend dependencies
   - name: 'gcr.io/cloud-builders/npm'
     args: ['install']
-    dir: 'frontend' # This line is important! It runs the command in the subdirectory.
+    dir: 'frontend' # Run this command inside the /frontend directory
     id: 'InstallDependencies'
 
-  # Step 2: Build the Vite application, securely injecting the API key.
+  # Step 2: Create the .env file from secrets, then build the application
   - name: 'gcr.io/cloud-builders/npm'
-    id: 'BuildApp'
-    dir: 'frontend' # Run this command in the frontend directory too.
+    dir: 'frontend' # Also run this step inside the /frontend directory
     entrypoint: 'bash'
     args:
       - '-c'
-      - 'export VITE_GEMINI_API_KEY=$$(gcloud secrets versions access latest --secret=gemini-api-key) && npm run build'
-    secretEnv: ['VITE_GEMINI_API_KEY']
+      - |
+        echo "VITE_FIREBASE_API_KEY=$${_FIREBASE_API_KEY}" >> .env
+        echo "VITE_FIREBASE_AUTH_DOMAIN=$${_FIREBASE_AUTH_DOMAIN}" >> .env
+        echo "VITE_FIREBASE_PROJECT_ID=$${_FIREBASE_PROJECT_ID}" >> .env
+        echo "VITE_FIREBASE_STORAGE_BUCKET=$${_FIREBASE_STORAGE_BUCKET}" >> .env
+        echo "VITE_FIREBASE_MESSAGING_SENDER_ID=$${_FIREBASE_MESSAGING_SENDER_ID}" >> .env
+        echo "VITE_FIREBASE_APP_ID=$${_FIREBASE_APP_ID}" >> .env
+        npm run build
+    secretEnv:
+      - '_FIREBASE_API_KEY'
+      - '_FIREBASE_AUTH_DOMAIN'
+      - '_FIREBASE_PROJECT_ID'
+      - '_FIREBASE_STORAGE_BUCKET'
+      - '_FIREBASE_MESSAGING_SENDER_ID'
+      - '_FIREBASE_APP_ID'
 
-  # Step 3: Deploy the contents of the 'frontend/dist' folder to your GCS bucket.
+  # Step 3: Deploy the built files from 'frontend/dist' to your bucket
   - name: 'gcr.io/cloud-builders/gsutil'
-    args:
-      - '-m'
-      - 'rsync'
-      - '-r'
-      - '-c'
-      - '-d'
-      - 'frontend/dist' # Source is now frontend/dist
-      - 'gs://shifted-project-os-deployment-website' # Your specific bucket name
+    args: ['-m', 'rsync', '-r', '-c', '-d', 'frontend/dist', 'gs://shifted-project-os-deployment-website']
     id: 'DeployToGCS'
 
-# This section tells Cloud Build which secret to make available.
+# This section maps the secrets in Secret Manager to the variables used in the build step.
+# It uses your confirmed Project ID.
 availableSecrets:
   secretManager:
-  - versionName: projects/shifted-project-os-deployment/secrets/gemini-api-key/versions/latest
-    env: 'VITE_GEMINI_API_KEY'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-api-key/versions/latest
+      env: '_FIREBASE_API_KEY'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-auth-domain/versions/latest
+      env: '_FIREBASE_AUTH_DOMAIN'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-project-id/versions/latest
+      env: '_FIREBASE_PROJECT_ID'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-storage-bucket/versions/latest
+      env: '_FIREBASE_STORAGE_BUCKET'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-messaging-sender-id/versions/latest
+      env: '_FIREBASE_MESSAGING_SENDER_ID'
+    - versionName: projects/shifted-project-os-deployment/secrets/firebase-app-id/versions/latest
+      env: '_FIREBASE_APP_ID'
 
 timeout: '1200s'
