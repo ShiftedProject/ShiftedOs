@@ -37,7 +37,7 @@ steps:
       - '-c'
       - '-d'
       - 'frontend/dist'
-      - 'gs://shifted-project-os-deployment'
+      - 'gs://shifted-project-os-deployment-website'
     id: 'DeployToGCS'
 
 availableSecrets:
