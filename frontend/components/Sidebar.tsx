@@ -2,19 +2,19 @@ import React from 'react';
 import { User, UserRole } from '../types';
 
 // CORRECTED: Import all the necessary icons from the './icon' directory
-import DashboardIcon from './icon/DashboardIcon';
-import ProjectIcon from './icon/ProjectIcon';
-import AssetIcon from './icon/AssetIcon';
-import TeamIcon from './icon/TeamIcon';
-import AnalyticsIcon from './icon/AnalyticsIcon';
-import FinanceIcon from './icon/FinanceIcon';
-import CrmIcon from './icon/CrmIcon';
-import KnowledgeIcon from './icon/KnowledgeIcon';
-import OkrIcon from './icon/OkrIcon';
-import ReportIcon from './icon/ReportIcon';
-import AdminIcon from './icon/AdminIcon';
-import LogoutIcon from './icon/LogoutIcon';
-import ShiftedOSLogoIcon from './icon/ShiftedOSLogoIcon';
+import DashboardIcon from './icons/DashboardIcon';
+import ProjectIcon from './icons/ProjectIcon';
+import AssetIcon from './icons/AssetIcon';
+import TeamIcon from './icons/TeamIcon';
+import AnalyticsIcon from './icons/AnalyticsIcon';
+import FinanceIcon from './icons/FinanceIcon';
+import CrmIcon from './icons/CrmIcon';
+import KnowledgeIcon from './icons/KnowledgeIcon';
+import OkrIcon from './icons/OkrIcon';
+import ReportIcon from './icons/ReportIcon';
+import AdminIcon from './icons/AdminIcon';
+import LogoutIcon from './icons/LogoutIcon';
+import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
 //test
 // Define the props that this component receives from App.tsx
 interface SidebarProps {
