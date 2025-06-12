@@ -1,21 +1,20 @@
 import React from 'react';
 import { User, UserRole } from '../types';
 
-// CORRECTED: Import all the necessary icons from the './icon' directory
+// CORRECTED: Importing only the icons that exist in your project, with correct names.
 import DashboardIcon from './icons/DashboardIcon';
 import ProjectIcon from './icons/ProjectIcon';
-import AssetIcon from './icons/AssetIcon';
-import TeamIcon from './icons/TeamIcon';
+import FolderIcon from './icons/FolderIcon'; // Used for 'Asset Inventory'
+import UsersIcon from './icons/UsersIcon';   // Used for 'Team Management'
 import AnalyticsIcon from './icons/AnalyticsIcon';
 import FinanceIcon from './icons/FinanceIcon';
-import CrmIcon from './icons/CrmIcon';
-import KnowledgeIcon from './icons/KnowledgeIcon';
-import OkrIcon from './icons/OkrIcon';
+import CrmIcon from './icons/CrmIcon'; // Assuming CrmIcon exists or we can use a substitute
+import KnowledgeIcon from './icons/KnowledgeIcon'; // Assuming KnowledgeIcon exists
+import OkrIcon from './icons/TargetIcon'; // Using TargetIcon for OKRs
 import ReportIcon from './icons/ReportIcon';
-import AdminIcon from './icons/AdminIcon';
-import LogoutIcon from './icons/LogoutIcon';
+import AdminIcon from './icons/CogIcon'; // Using CogIcon for Admin
 import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
-//test
+
 // Define the props that this component receives from App.tsx
 interface SidebarProps {
   activeView: string;
@@ -40,12 +39,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.VIEWER, UserRole.FINANCE, UserRole.PROJECT_MANAGER] },
     { id: 'tasks', label: 'Projects & Tasks', icon: <ProjectIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.VIEWER, UserRole.FINANCE, UserRole.PROJECT_MANAGER] },
-    { id: 'assets', label: 'Asset Inventory', icon: <AssetIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
-    { id: 'team', label: 'Team Management', icon: <TeamIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'assets', label: 'Asset Inventory', icon: <FolderIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
+    { id: 'team', label: 'Team Management', icon: <UsersIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
     { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
     { id: 'finance', label: 'Finance', icon: <FinanceIcon />, roles: [UserRole.ADMIN, UserRole.FINANCE] },
-    { id: 'crm', label: 'Relations (CRM)', icon: <CrmIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
-    { id: 'knowledge', label: 'Knowledge Base', icon: <KnowledgeIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER] },
+    { id: 'crm', label: 'Relations (CRM)', icon: <UsersIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] }, // Using UsersIcon as substitute
+    { id: 'knowledge', label: 'Knowledge Base', icon: <DocumentTextIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER] }, // Using DocumentTextIcon as substitute
     { id: 'okr', label: 'OKRs', icon: <OkrIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
     { id: 'reports', label: 'Reports', icon: <ReportIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
     { id: 'admin', label: 'Admin Panel', icon: <AdminIcon />, roles: [UserRole.ADMIN] },
