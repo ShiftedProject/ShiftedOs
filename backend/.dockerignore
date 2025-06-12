@@ -1,0 +1,5 @@
+# Ignore the local node_modules folder. We run 'npm install' inside the container instead.
+node_modules
+
+# Ignore npm debug logs, if any.
+npm-debug.log
