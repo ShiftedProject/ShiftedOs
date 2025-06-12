@@ -5,10 +5,12 @@ import Button from './Button';
 import Modal from './Modal';
 import PlusIcon from './icons/PlusIcon';
 import Tag from './Tag'; 
+import DocumentTextIcon from './icons/DocumentTextIcon'; // For external link button
 
 const initialArticles: KnowledgeArticle[] = [
-  { id: 'KB-001', title: 'Onboarding New Team Members', content: 'Detailed SOP for onboarding new hires...\n\n- Step 1: ...\n- Step 2: ...', category: 'SOP', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), tags: ['HR', 'Process'] },
-  { id: 'KB-002', title: 'Brand Voice Guidelines', content: 'Our brand voice is friendly, professional, and insightful...\n\nKey Principles:\n- Clarity\n- Empathy\n- Authority', category: 'Guidelines', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), tags: ['Branding', 'Marketing'] },
+  { id: 'KB-001', title: 'Onboarding New Team Members', content: 'Detailed SOP for onboarding new hires...\n\n- Step 1: ...\n- Step 2: ...', category: 'SOP', documentUrl: 'https://docs.google.com/document/d/example1/edit', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), tags: ['HR', 'Process'] },
+  { id: 'KB-002', title: 'Brand Voice Guidelines', content: 'Our brand voice is friendly, professional, and insightful...\n\nKey Principles:\n- Clarity\n- Empathy\n- Authority', category: 'Guidelines', documentUrl: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), tags: ['Branding', 'Marketing'] },
+  { id: 'KB-003', title: 'Video Editing Workflow', content: 'Standard workflow for editing video content, from raw footage to final export.', category: 'Workflow', documentUrl: 'https://www.notion.so/exampleworkflow/video-editing', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), tags: ['Video', 'Production'] },
 ];
 
 const KnowledgeBaseView: React.FC = () => {
@@ -18,6 +20,7 @@ const KnowledgeBaseView: React.FC = () => {
     title: '',
     content: '',
     category: 'General',
+    documentUrl: '',
     tags: []
   });
   const [editingArticle, setEditingArticle] = useState<KnowledgeArticle | null>(null);
@@ -37,11 +40,12 @@ const KnowledgeBaseView: React.FC = () => {
       setEditingArticle(articleToEdit);
       setNewArticle({
         ...articleToEdit,
+        documentUrl: articleToEdit.documentUrl || '',
         tags: articleToEdit.tags || [] 
       });
     } else {
       setEditingArticle(null);
-      setNewArticle({ title: '', content: '', category: 'General', tags: [] });
+      setNewArticle({ title: '', content: '', category: 'General', documentUrl: '', tags: [] });
     }
     setViewingArticle(null);
     setIsModalOpen(true);
@@ -84,7 +88,7 @@ const KnowledgeBaseView: React.FC = () => {
   const handleDeleteArticle = (articleId: string) => {
     if (window.confirm("Are you sure you want to delete this article?")) {
       setArticles(prev => prev.filter(art => art.id !== articleId));
-       if (viewingArticle?.id === articleId) { // Close view modal if deleted article was being viewed
+       if (viewingArticle?.id === articleId) { 
         handleCloseViewModal();
       }
     }
@@ -100,13 +104,13 @@ const KnowledgeBaseView: React.FC = () => {
       </div>
       
       {articles.length === 0 ? (
-         <div className="bg-white rounded-xl p-8 shadow-glass-depth text-center border border-gray-200"> {/* Enhanced shadow */}
+         <div className="bg-white rounded-xl p-8 shadow-glass-depth text-center border border-gray-200">
             <p className="text-text-secondary">No articles yet. Start documenting your processes and guidelines!</p>
          </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {articles.map(article => (
-            <div key={article.id} className="bg-white p-4 sm:p-5 rounded-xl shadow-glass-depth hover:shadow-strong transition-shadow duration-200 border border-gray-200/50 flex flex-col justify-between"> {/* Enhanced shadow */}
+            <div key={article.id} className="bg-white p-4 sm:p-5 rounded-xl shadow-glass-depth hover:shadow-strong transition-shadow duration-200 border border-gray-200/50 flex flex-col justify-between">
               <div>
                 <h3 className="text-md sm:text-lg font-semibold text-text-primary mb-1 truncate" title={article.title}>{article.title}</h3>
                 <Tag text={article.category} color="secondary" size="sm" className="mb-2"/>
@@ -118,10 +122,22 @@ const KnowledgeBaseView: React.FC = () => {
                 )}
                 <p className="text-xs text-gray-400">Last updated: {new Date(article.updatedAt).toLocaleDateString()}</p>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button onClick={() => handleOpenViewModal(article)} size="sm" variant="ghost" className="flex-1 sm:flex-none">View</Button>
-                <Button onClick={() => handleOpenModal(article)} size="sm" variant="ghost" className="flex-1 sm:flex-none">Edit</Button>
-                <Button onClick={() => handleDeleteArticle(article.id)} size="sm" variant="danger" className="bg-transparent text-red-500 hover:bg-red-500/10 flex-1 sm:flex-none">Delete</Button>
+              <div className="mt-4 flex flex-col space-y-2">
+                {article.documentUrl && (
+                  <Button 
+                    onClick={() => window.open(article.documentUrl, '_blank', 'noopener,noreferrer')} 
+                    size="sm" 
+                    variant="highlight" 
+                    leftIcon={<DocumentTextIcon className="w-4 h-4"/>}
+                  >
+                    Access Document
+                  </Button>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => handleOpenViewModal(article)} size="sm" variant="ghost" className="flex-1 sm:flex-auto">View</Button>
+                  <Button onClick={() => handleOpenModal(article)} size="sm" variant="ghost" className="flex-1 sm:flex-auto">Edit</Button>
+                  <Button onClick={() => handleDeleteArticle(article.id)} size="sm" variant="danger" className="bg-transparent text-red-500 hover:bg-red-500/10 flex-1 sm:flex-auto">Delete</Button>
+                </div>
               </div>
             </div>
           ))}
@@ -142,6 +158,10 @@ const KnowledgeBaseView: React.FC = () => {
             <label htmlFor="kbContent" className="block text-sm font-medium text-text-secondary mb-1">Content (Markdown supported conceptually)</label>
             <textarea name="content" id="kbContent" value={newArticle.content || ''} onChange={handleInputChange} required rows={8} className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-main-accent focus:border-main-accent bg-white"></textarea>
           </div>
+          <div>
+            <label htmlFor="kbDocumentUrl" className="block text-sm font-medium text-text-secondary mb-1">External Document URL (Optional)</label>
+            <input type="url" name="documentUrl" id="kbDocumentUrl" value={newArticle.documentUrl || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-main-accent focus:border-main-accent bg-white" placeholder="https://example.com/document" />
+          </div>
            <div>
             <label htmlFor="kbTags" className="block text-sm font-medium text-text-secondary mb-1">Tags (comma-separated)</label>
             <input type="text" name="tags" id="kbTags" value={newArticle.tags?.join(', ') || ''} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-main-accent focus:border-main-accent bg-white" placeholder="e.g., HR, onboarding, design"/>
@@ -161,12 +181,24 @@ const KnowledgeBaseView: React.FC = () => {
                     <Tag text={viewingArticle.category} color="secondary" size="sm"/>
                 </div>
                  {viewingArticle.tags && viewingArticle.tags.length > 0 && (
-                    <div>
+                    <div className="mb-2">
                         <span className="text-sm font-medium text-text-secondary">Tags: </span>
                         {viewingArticle.tags.map(tag => <Tag key={tag} text={tag} color="highlight" size="sm" className="mr-1 mb-1"/>)}
                     </div>
                 )}
-                <div className="prose prose-sm sm:prose-base max-w-none text-text-primary whitespace-pre-wrap">{viewingArticle.content}</div>
+                {viewingArticle.documentUrl && (
+                    <div className="my-3">
+                        <Button 
+                        onClick={() => window.open(viewingArticle.documentUrl, '_blank', 'noopener,noreferrer')} 
+                        size="md" 
+                        variant="highlight" 
+                        leftIcon={<DocumentTextIcon className="w-5 h-5"/>}
+                        >
+                        Access Linked Document
+                        </Button>
+                    </div>
+                )}
+                <div className="prose prose-sm sm:prose-base max-w-none text-text-primary whitespace-pre-wrap border-t border-gray-200 pt-3">{viewingArticle.content}</div>
                 <p className="text-xs text-gray-400 mt-4">
                     Created: {new Date(viewingArticle.createdAt).toLocaleString()} | Updated: {new Date(viewingArticle.updatedAt).toLocaleString()}
                 </p>

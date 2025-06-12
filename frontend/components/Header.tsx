@@ -11,7 +11,8 @@ interface HeaderProps {
   title: string;
   onPrimaryAction?: () => void; 
   primaryActionButtonLabel?: string; 
-  primaryActionIcon?: React.ReactNode; 
+  primaryActionIcon?: React.ReactNode;
+  isPrimaryActionEnabled?: boolean; // New prop to control button state from App.tsx based on role
   onToggleSidebar: () => void;
   isDesktopSidebarCollapsed?: boolean;
   notifications: Notification[];
@@ -25,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({
   onPrimaryAction, 
   primaryActionButtonLabel,
   primaryActionIcon,
+  isPrimaryActionEnabled = true, // Default to true if not provided
   onToggleSidebar, 
   isDesktopSidebarCollapsed,
   notifications,
@@ -61,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({
 
 
   return (
-    <header className="sticky top-0 z-20 bg-glass-bg backdrop-blur-xl border-b border-white/20 px-4 sm:px-6 py-4 shadow-lg"> {/* Updated background and border */}
+    <header className="sticky top-0 z-20 bg-glass-bg backdrop-blur-xl border-b border-white/20 px-4 sm:px-6 py-4 shadow-lg"> 
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <button 
@@ -74,12 +76,14 @@ const Header: React.FC<HeaderProps> = ({
           <h2 className="text-xl sm:text-2xl font-semibold text-text-primary">{title}</h2>
         </div>
         <div className="flex items-center space-x-3 sm:space-x-4">
-          {onPrimaryAction && primaryActionButtonLabel && ( // Ensure label exists to render button
+          {onPrimaryAction && primaryActionButtonLabel && isPrimaryActionEnabled && ( 
             <Button 
               onClick={onPrimaryAction} 
               leftIcon={primaryActionIcon || <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5" />} 
               size="md" 
               className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base"
+              disabled={!isPrimaryActionEnabled} // Explicitly disable if action not enabled
+              title={!isPrimaryActionEnabled ? "Action not available for your role" : primaryActionButtonLabel}
             >
               {primaryActionButtonLabel}
             </Button>

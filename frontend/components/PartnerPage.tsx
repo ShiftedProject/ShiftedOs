@@ -47,15 +47,18 @@ const PartnerPage: React.FC = () => {
     setMessage('');
   };
 
+  // The main container for PartnerPage now assumes it might be part of a larger layout
+  // (e.g., within LandingPage that has its own header/footer).
+  // Background and overall page structure are handled by the parent (LandingPage).
+
   if (isSubmitted) {
     return (
-      <div className="max-w-2xl mx-auto px-3 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 my-8 text-center">
-        {/* Removed white container div */}
+      <div className="max-w-2xl mx-auto px-3 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20 text-center">
         <h1 className="text-3xl sm:text-4xl font-semibold text-main-accent mb-6">Thank You!</h1>
         <p className="text-text-primary text-lg sm:text-xl mb-8">
           Your inquiry has been received. We appreciate your interest in partnering with Shifted Project and will be in touch soon.
         </p>
-        <Button onClick={() => setIsSubmitted(false)} variant="primary" size="lg">
+        <Button onClick={() => setIsSubmitted(false)} variant="primary" size="lg" className="bg-landing-primary-cta hover:opacity-90 text-white">
           Submit Another Inquiry
         </Button>
       </div>
@@ -63,11 +66,10 @@ const PartnerPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-3 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-12 my-8">
-      {/* Removed white container div */}
+    <div className="max-w-2xl mx-auto px-3 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
       <header className="text-center mb-8 sm:mb-10">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-          <span className="text-main-accent">Partner With </span><span className="text-highlight">Shifted Project</span>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-landing-text">
+          Partner With <span className="text-landing-primary-cta">Shifted Project</span>
         </h1>
         <p className="text-lg sm:text-xl text-text-secondary">
           Interested in media partnerships, sponsorships, or collaborations? We'd love to hear from you!
@@ -81,7 +83,7 @@ const PartnerPage: React.FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-200/80">
         <div>
           <label htmlFor="fullName" className="block text-sm font-medium text-text-secondary mb-1">
             Full Name <span className="text-red-500">*</span>
@@ -156,7 +158,7 @@ const PartnerPage: React.FC = () => {
           />
         </div>
 
-        <Button type="submit" variant="primary" size="lg" className="w-full">
+        <Button type="submit" variant="primary" size="lg" className="w-full bg-landing-primary-cta hover:opacity-90 text-white">
           Send Inquiry
         </Button>
       </form>

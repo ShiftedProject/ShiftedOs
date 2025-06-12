@@ -6,19 +6,21 @@ import FinanceIcon from './icons/FinanceIcon';
 import KnowledgeIcon from './icons/KnowledgeIcon';
 import TargetIcon from './icons/TargetIcon';
 import ReportIcon from './icons/ReportIcon';
-import UserIcon from './icons/UserIcon'; // For CRM
+import UserIcon from './icons/UserIcon'; 
 import ChevronDoubleLeftIcon from './icons/ChevronDoubleLeftIcon';
 import ChevronDoubleRightIcon from './icons/ChevronDoubleRightIcon';
-// import ChartBarSquareIcon from './icons/ChartBarSquareIcon'; // No longer top-level
 import FolderIcon from './icons/FolderIcon'; 
 import UsersIcon from './icons/UsersIcon'; 
+import CogIcon from './icons/CogIcon'; // For Admin
+import ChartBarSquareIcon from './icons/ChartBarSquareIcon'; // Added for Dashboard
+import { User } from '../types';
 
 interface NavItemProps {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
   onClick?: () => void;
-  isCollapsed?: boolean; // For desktop collapsed state
+  isCollapsed?: boolean; 
 }
 
 const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, isCollapsed }) => (
@@ -28,7 +30,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick, isColla
     className={`flex items-center w-full py-3 rounded-lg transition-all duration-150 group
                 ${isCollapsed ? 'md:px-3 md:justify-center' : 'px-4'}
                 ${active 
-                    ? 'bg-main-accent text-white shadow-md hover:bg-main-accent/90' // Added hover effect for active item
+                    ? 'bg-main-accent text-white shadow-md hover:bg-main-accent/90' 
                     : 'text-text-secondary hover:bg-main-accent/10 hover:text-main-accent'
                 }`}
   >
@@ -44,6 +46,7 @@ interface SidebarProps {
   setIsMobileSidebarOpen: (isOpen: boolean) => void;
   isDesktopSidebarCollapsed: boolean;
   toggleDesktopSidebarCollapse: () => void;
+  currentUser: User | null; // Added currentUser
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -52,11 +55,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobileSidebarOpen, 
   setIsMobileSidebarOpen,
   isDesktopSidebarCollapsed,
-  toggleDesktopSidebarCollapse
+  toggleDesktopSidebarCollapse,
+  currentUser
 }) => {
   const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: <ChartBarSquareIcon className="w-5 h-5" /> }, // Added Dashboard
     { id: 'tasks', label: 'Projects & Tasks', icon: <ProjectIcon className="w-5 h-5" /> },
-    // { id: 'gantt', label: 'Gantt Chart', icon: <ChartBarSquareIcon className="w-5 h-5" /> }, // Removed
     { id: 'analytics', label: 'Analytics & Insights', icon: <AnalyticsIcon className="w-5 h-5" /> },
     { id: 'finance', label: 'Finance & Budgeting', icon: <FinanceIcon className="w-5 h-5" /> },
     { id: 'assets', label: 'Asset Inventory', icon: <FolderIcon className="w-5 h-5" /> }, 
@@ -69,17 +73,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleItemClick = (viewId: string) => {
     setActiveView(viewId);
-    if (window.innerWidth < 768) { // md breakpoint
+    if (window.innerWidth < 768) { 
         setIsMobileSidebarOpen(false);
     }
   }
 
+  const isAdmin = currentUser?.email === 'admin@shiftedos.com';
+
   return (
     <>
-      {/* Backdrop for mobile sidebar */}
       {isMobileSidebarOpen && (
         <div 
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" // Darker backdrop
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" 
           onClick={() => setIsMobileSidebarOpen(false)}
           aria-hidden="true"
         ></div>
@@ -94,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <h1 className="text-3xl font-bold text-main-accent text-center md:text-left">ShiftedOS</h1>
           <p className="text-xs text-text-secondary text-center md:text-left">by ShiftedProject.ID</p>
         </div>
-        <nav className="flex-grow space-y-1.5 overflow-y-auto"> {/* Added overflow-y-auto for many items */}
+        <nav className="flex-grow space-y-1.5 overflow-y-auto">
           {navItems.map(item => (
             <NavItem
               key={item.id}
@@ -115,9 +120,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             isCollapsed={isDesktopSidebarCollapsed}
             active={activeView === 'profile'}
             />
+            {isAdmin && (
+               <NavItem 
+                icon={<CogIcon className="w-5 h-5" />} 
+                label="Admin Panel" 
+                onClick={() => handleItemClick('admin')}
+                isCollapsed={isDesktopSidebarCollapsed}
+                active={activeView === 'admin'}
+                />
+            )}
         </div>
 
-        {/* Desktop Sidebar Collapse Toggle */}
         <div className={`hidden md:block mt-3 pt-3 ${isDesktopSidebarCollapsed ? '' : 'border-t border-white/20'}`}>
             <button
                 onClick={toggleDesktopSidebarCollapse}

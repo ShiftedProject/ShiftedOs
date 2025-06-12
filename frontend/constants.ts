@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TaskStatus, Division, ContentPillar, NotificationIconType, ProjectStatus, AssetType } from './types';
+import { TaskStatus, Division, ContentPillar, NotificationIconType, ProjectStatus, AssetType, TaskPriority } from './types'; // Added TaskPriority
 
 // Import Notification Icons
 import PlusCircleIcon from './components/icons/PlusCircleIcon';
@@ -47,6 +47,13 @@ export const CONTENT_PILLAR_OPTIONS: ContentPillar[] = [
   ContentPillar.DATA_FENOMENA,
   ContentPillar.DIALOG,
   ContentPillar.NONE,
+];
+
+export const TASK_PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
+  { value: TaskPriority.LOW, label: 'Low' },
+  { value: TaskPriority.MEDIUM, label: 'Medium' },
+  { value: TaskPriority.HIGH, label: 'High' },
+  { value: TaskPriority.URGENT, label: 'Urgent' },
 ];
 
 export const NASKAH_TEMPLATE_HOOK = `**🔥 HOOK (0-3 detik):**\n\n`;

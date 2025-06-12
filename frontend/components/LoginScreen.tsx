@@ -2,14 +2,16 @@
 import React, { useState } from 'react';
 import Button from './Button';
 import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
+import { UserRole } from '../types';
 
 interface LoginScreenProps {
   onLogin: (email: string, pass: string) => void;
+  onQuickLoginAsRole: (role: UserRole) => void; 
   loginError?: string;
-  isLoading?: boolean; // New prop
+  isLoading?: boolean;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoading }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, loginError, isLoading }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
@@ -18,6 +20,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoadin
     if (isLoading) return;
     onLogin(email, password);
   };
+
+  const quickLoginRoles: { role: UserRole; label: string }[] = [
+    { role: UserRole.EDITOR, label: 'Login as Editor' },
+    { role: UserRole.SCRIPT_WRITER, label: 'Login as Script Writer' },
+    { role: UserRole.PROJECT_MANAGER, label: 'Login as Project Manager' },
+    { role: UserRole.FINANCE, label: 'Login as Finance' },
+    { role: UserRole.VIEWER, label: 'Login as Viewer' },
+  ];
 
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -38,7 +48,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoadin
           <fieldset disabled={isLoading}>
             <div>
               <label htmlFor="email-login" className="block text-sm font-medium text-text-secondary mb-1">
-                Email Address
+                Email Address (admin@shiftedos.com)
               </label>
               <input
                 type="email"
@@ -48,12 +58,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoadin
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-main-accent focus:border-main-accent transition-colors disabled:bg-gray-100"
-                placeholder="you@example.com"
+                placeholder="admin@shiftedos.com"
               />
             </div>
             <div>
               <label htmlFor="password-login" className="block text-sm font-medium text-text-secondary mb-1">
-                Password
+                Password (password)
               </label>
               <input
                 type="password"
@@ -68,9 +78,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoadin
             </div>
           </fieldset>
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Signing In...' : 'Sign In as Admin'}
           </Button>
         </form>
+
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-center text-sm text-text-secondary mb-4">Or quick login for development:</p>
+          <div className="space-y-3">
+            {quickLoginRoles.map(({ role, label }) => (
+              <Button
+                key={role}
+                onClick={() => onQuickLoginAsRole(role)}
+                variant="secondary"
+                size="md"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

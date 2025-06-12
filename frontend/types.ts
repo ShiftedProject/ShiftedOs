@@ -26,14 +26,24 @@ export enum ContentPillar {
   NONE = 'N/A'
 }
 
+export enum UserRole {
+  ADMIN = 'Admin',
+  EDITOR = 'Editor',
+  SCRIPT_WRITER = 'Script Writer',
+  VIEWER = 'Viewer',
+  FINANCE = 'Finance',
+  PROJECT_MANAGER = 'Project Manager', // Added PROJECT_MANAGER role
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: string; // Original role field, e.g., 'Admin', 'Editor'
-  roleName?: string; // New: More specific role from a list, e.g., 'Lead Designer'
-  avatarUrl?: string; // Optional
-  bio?: string; // Optional
+  role: UserRole; 
+  roleName?: string; 
+  avatarUrl?: string; 
+  bio?: string; 
+  password?: string; 
 }
 
 export enum ProjectStatus {
@@ -49,29 +59,37 @@ export interface Project {
   name: string;
   description?: string;
   status: ProjectStatus;
-  startDate?: string; // ISO date string
-  endDate?: string; // ISO date string
-  owner?: string; // User ID or name
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  startDate?: string; 
+  endDate?: string; 
+  owner?: string; 
+  budget?: number; 
+  proofOfWorkUrl?: string; 
+  createdAt: string; 
+  updatedAt: string; 
 }
 
+export enum TaskPriority {
+  LOW = 'Low',
+  MEDIUM = 'Medium',
+  HIGH = 'High',
+  URGENT = 'Urgent',
+}
 
 export interface Task {
-  id: string;
-  projectId: string; // ID of the parent project
+  id:string;
+  projectId: string; 
   title: string;
   description: string;
   status: TaskStatus;
-  assignee?: string; // User NAME (was User ID or name, now specifically name for mock)
-  startDate?: string; // Optional: ISO date string for Gantt chart start
-  deadline?: string; // ISO date string
-  duration?: number; // Optional: duration in days for Gantt
+  assignee?: string; 
+  startDate?: string; 
+  deadline?: string; 
+  duration?: number; 
+  priority?: TaskPriority; 
   divisionTag: Division;
   contentPillarTag: ContentPillar;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-  // For future analytics integration
+  createdAt: string; 
+  updatedAt: string; 
   views?: number;
   likes?: number;
   engagementRate?: number;
@@ -84,16 +102,16 @@ export interface Collaborator {
   contactInfo: string;
   rate?: string;
   portfolioUrl?: string;
-  collaborationHistory?: string[]; // Array of Task IDs
+  collaborationHistory?: string[]; 
 }
 
 export interface Expense {
   id: string;
   description: string;
   amount: number;
-  date: string; // ISO date string
+  date: string; 
   category: string;
-  projectId?: string; // Optional: link to a project/task
+  projectId?: string; 
 }
 
 export interface Budget {
@@ -101,14 +119,15 @@ export interface Budget {
   name: string;
   projectId?: string;
   allocatedAmount: number;
-  spentAmount: number; // Calculated from expenses
+  spentAmount: number; 
 }
 
 export interface KnowledgeArticle {
   id: string;
   title: string;
-  content: string; // Markdown supported conceptually
+  content: string; 
   category: string;
+  documentUrl?: string; 
   createdAt: string;
   updatedAt: string;
   tags?: string[];
@@ -127,7 +146,7 @@ export interface KeyResult {
   description: string;
   targetValue: number;
   currentValue: number;
-  unit: string; // e.g., %, $, items
+  unit: string; 
   status: KeyResultStatus;
   objectiveId: string;
 }
@@ -136,9 +155,9 @@ export interface Objective {
   id: string;
   title: string;
   description: string;
-  keyResultIds: string[]; // Store IDs, KeyResult objects stored separately or fetched
-  timeframe: string; // e.g., "Q3 2024"
-  owner?: string; // User ID or name
+  keyResultIds: string[]; 
+  timeframe: string; 
+  owner?: string; 
   createdAt: string;
 }
 
@@ -154,8 +173,8 @@ export enum NotificationType {
   PROJECT_CREATED = 'PROJECT_CREATED',
   PROJECT_UPDATED = 'PROJECT_UPDATED',
   PROJECT_STATUS_CHANGED = 'PROJECT_STATUS_CHANGED',
-  ASSET_CREATED = 'ASSET_CREATED', // New
-  ASSET_DELETED = 'ASSET_DELETED', // New
+  ASSET_CREATED = 'ASSET_CREATED', 
+  ASSET_DELETED = 'ASSET_DELETED', 
 }
 
 export enum NotificationIconType {
@@ -164,10 +183,10 @@ export enum NotificationIconType {
   USER_CIRCLE = 'USER_CIRCLE',
   AT_SYMBOL = 'AT_SYMBOL',
   EYE = 'EYE',
-  BELL = 'BELL', // For general or default
-  EXCLAMATION_TRIANGLE = 'EXCLAMATION_TRIANGLE', // For warnings
-  PROJECT = 'PROJECT', // For project related notifications
-  FOLDER = 'FOLDER', // New for Assets
+  BELL = 'BELL', 
+  EXCLAMATION_TRIANGLE = 'EXCLAMATION_TRIANGLE', 
+  PROJECT = 'PROJECT', 
+  FOLDER = 'FOLDER', 
 }
 
 export interface Notification {
@@ -175,13 +194,12 @@ export interface Notification {
   type: NotificationType;
   iconType: NotificationIconType;
   message: string;
-  timestamp: string; // ISO date string
+  timestamp: string; 
   read: boolean;
-  relatedItemId?: string; // e.g., Task ID or Project ID
-  relatedItemType?: 'task' | 'project' | 'user' | 'asset'; // New
+  relatedItemId?: string; 
+  relatedItemType?: 'task' | 'project' | 'user' | 'asset'; 
 }
 
-// New Types for Asset Inventory
 export enum AssetType {
   IMAGE = 'Image',
   VIDEO = 'Video',
@@ -197,17 +215,55 @@ export interface Asset {
   name: string;
   type: AssetType;
   description?: string;
-  filePathOrUrl?: string; // Mocked, actual URL or path
-  previewUrl?: string; // Mocked, URL for image/video preview
+  filePathOrUrl?: string; 
+  previewUrl?: string; 
   tags?: string[];
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  createdAt: string; 
+  updatedAt: string; 
 }
 
-// New Type for Roles (Team Management)
 export interface Role {
   id: string;
   name: string;
   description?: string;
-  permissions?: string[]; // Placeholder for future permissions
+  permissions?: string[]; 
+}
+
+export interface ThemeColors {
+  mainBackground: string;
+  glassBg: string;
+  mainAccent: string;
+  secondaryAccent: string;
+  highlight: string;
+  textPrimary: string;
+  textSecondary: string;
+}
+
+export interface AnalyticsMetricConfig {
+  id: string;
+  label: string;
+  isVisible: boolean;
+}
+
+export interface AnalyticsConfig {
+  metricVisibility: Record<string, boolean>; 
+  chartType: 'Bar Chart' | 'Line Chart' | 'Pie Chart' | 'None';
+}
+
+export type ReportTemplateType = 'task_progress' | 'financial_summary' | 'team_productivity' | 'content_performance';
+
+export interface ReportCriteria {
+  template: ReportTemplateType | '';
+  startDate: string;
+  endDate: string;
+  projectId: string | 'all'; 
+}
+
+export interface GeneratedReportData {
+  title: string;
+  criteria: ReportCriteria;
+  generatedAt: string;
+  summary?: Record<string, string | number>;
+  dataRows?: Record<string, any>[]; 
+  message?: string; 
 }

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Task, TaskStatus, Division, ContentPillar } from '../types';
+import { Task, TaskStatus, Division, ContentPillar, UserRole } from '../types';
 import Tag from './Tag';
 import CalendarIcon from './icons/CalendarIcon';
 import UserIcon from './icons/UserIcon';
@@ -12,13 +12,27 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onUpdateStatus: (taskId: string, newStatus: TaskStatus) => void;
+  currentUserRole: UserRole; // Added to control button visibility/actions
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onUpdateStatus }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onUpdateStatus, currentUserRole }) => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
+
+  const canEditTask = 
+    currentUserRole === UserRole.ADMIN || 
+    currentUserRole === UserRole.EDITOR ||
+    (currentUserRole === UserRole.SCRIPT_WRITER && (task.status === TaskStatus.TODO || task.status === TaskStatus.IN_PROGRESS || task.status === TaskStatus.BLOCKED )) || // Script writer can edit if not in review/done/published
+    (currentUserRole === UserRole.FINANCE && task.assignee === "Charlie Finance"); // Mock Finance user name for now
+
+  const canDeleteTask = 
+    currentUserRole === UserRole.ADMIN ||
+    currentUserRole === UserRole.EDITOR ||
+    (currentUserRole === UserRole.SCRIPT_WRITER && (task.status === TaskStatus.TODO || task.status === TaskStatus.IN_PROGRESS)) || // Script writer can delete only in early stages
+    (currentUserRole === UserRole.FINANCE && task.assignee === "Charlie Finance" && (task.status === TaskStatus.TODO || task.status === TaskStatus.IN_PROGRESS));
+
 
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl shadow-glass-depth hover:shadow-strong transition-shadow duration-200 border border-gray-300/50 flex flex-col justify-between">
@@ -57,17 +71,27 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onUpdateSta
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2 items-center">
-        <Button onClick={() => onEdit(task)} size="sm" variant="ghost">Edit</Button>
-        {task.status !== TaskStatus.IN_REVIEW && task.status !== TaskStatus.PUBLISHED && task.status !== TaskStatus.DONE && (
+        {canEditTask && (
+          <Button onClick={() => onEdit(task)} size="sm" variant="ghost">Edit</Button>
+        )}
+
+        {currentUserRole !== UserRole.VIEWER && currentUserRole !== UserRole.FINANCE && task.status !== TaskStatus.IN_REVIEW && task.status !== TaskStatus.PUBLISHED && task.status !== TaskStatus.DONE && (
           <Button onClick={() => onUpdateStatus(task.id, TaskStatus.IN_REVIEW)} size="sm" variant="secondary">Request Review</Button>
         )}
-        {task.status === TaskStatus.IN_REVIEW && (
+        
+        {(currentUserRole === UserRole.ADMIN || currentUserRole === UserRole.EDITOR) && task.status === TaskStatus.IN_REVIEW && (
           <>
             <Button onClick={() => onUpdateStatus(task.id, TaskStatus.PUBLISHED)} size="sm" variant="primary" customColorClass="bg-green-500 hover:bg-green-600 text-white">Approve & Publish</Button>
             <Button onClick={() => onUpdateStatus(task.id, TaskStatus.IN_PROGRESS)} size="sm" variant="danger">Request Changes</Button>
           </>
         )}
-         <Button onClick={() => onDelete(task.id)} size="sm" variant="danger" className="ml-auto bg-transparent text-red-500 hover:bg-red-500/10">Delete</Button>
+        {currentUserRole === UserRole.FINANCE && task.assignee === "Charlie Finance" && task.status !== TaskStatus.DONE && (
+             <Button onClick={() => onUpdateStatus(task.id, TaskStatus.DONE)} size="sm" variant="primary">Mark as Done</Button>
+        )}
+
+         {canDeleteTask && (
+            <Button onClick={() => onDelete(task.id)} size="sm" variant="danger" className="ml-auto bg-transparent text-red-500 hover:bg-red-500/10">Delete</Button>
+         )}
       </div>
     </div>
   );
