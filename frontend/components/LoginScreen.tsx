@@ -1,17 +1,15 @@
-
 import React, { useState } from 'react';
 import Button from './Button';
 import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
-import { UserRole } from '../types';
 
+// The props are now simplified, as we've removed the quick login feature.
 interface LoginScreenProps {
   onLogin: (email: string, pass: string) => void;
-  onQuickLoginAsRole: (role: UserRole) => void; 
   loginError?: string;
   isLoading?: boolean;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, loginError, isLoading }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError, isLoading }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
@@ -40,7 +38,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, 
           <fieldset disabled={isLoading}>
             <div>
               <label htmlFor="email-login" className="block text-sm font-medium text-text-secondary mb-1">
-                Email Address (admin@shiftedos.com)
+                Email Address
               </label>
               <input
                 type="email"
@@ -49,13 +47,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-main-accent focus:border-main-accent transition-colors disabled:bg-gray-100"
-                placeholder="admin@shiftedos.com"
+                placeholder="you@example.com"
               />
             </div>
             <div>
               <label htmlFor="password-login" className="block text-sm font-medium text-text-secondary mb-1">
-                Password (password)
+                Password
               </label>
               <input
                 type="password"
@@ -64,33 +63,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onQuickLoginAsRole, 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-main-accent focus:border-main-accent transition-colors disabled:bg-gray-100"
                 placeholder="••••••••"
               />
             </div>
           </fieldset>
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In as Admin'}
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
-
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-center text-sm text-text-secondary mb-4">Or quick login for development:</p>
-          <div className="space-y-3">
-            {quickLoginRoles.map(({ role, label }) => (
-              <Button
-                key={role}
-                onClick={() => onQuickLoginAsRole(role)}
-                variant="secondary"
-                size="md"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Logging in...' : label}
-              </Button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

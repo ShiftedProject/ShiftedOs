@@ -13,6 +13,7 @@ import UsersIcon from './icons/UsersIcon';
 import FolderIcon from './icons/FolderIcon';
 import FinanceIcon from './icons/FinanceIcon';
 
+// The props are now simplified.
 interface LandingPageProps {
   onLogin: (email: string, pass: string) => void;
   loginError?: string;
@@ -80,7 +81,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loginError, isLoadin
   return (
     <div className="flex flex-col min-h-screen bg-landing-bg">
       <LandingHeader onNavigate={handleNavigation} />
-
       <main className={getMainClass()}>
         {displayView === 'main' && (
           <>
@@ -132,4 +132,3 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, loginError, isLoadin
 };
 
 export default LandingPage;
-// checking
