@@ -127,82 +127,47 @@ const App: React.FC = () => {
 
   // --- CHANGE 4: Replace mock authentication with real Firebase Auth ---
   const handleLogin = async (email: string, pass: string) => {
-  setIsLoggingIn(true);
-  setLoginError(undefined);
+    setIsLoggingIn(true);
+    setLoginError(undefined);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const firebaseUser = userCredential.user;
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    const firebaseUser = userCredential.user;
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data();
-
-      setCurrentUser({
-        id: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        name: userData.name,
-        roleName: userData.roleName,
-        bio: userData.bio,
-        avatarUrl: userData.avatarUrl,
-      } as User);
-
-      // 🔥 Get Firebase ID token
-      const idToken = await firebaseUser.getIdToken();
-
-      // 🛰️ Send it to backend
-      try {
-        const res = await fetch("http://localhost:8080/api/tasks", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            'Content-Type': 'application/json'
-          }
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        setCurrentUser({
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: userData.name,
+          role: userData.role,
+          roleName: userData.roleName,
+          bio: userData.bio,
+          avatarUrl: userData.avatarUrl,
+        } as User);
+        setIsAuthenticated(true);
+        setActiveView('dashboard');
+        addNotification({
+          type: NotificationType.GENERAL_INFO, iconType: NotificationIconType.BELL,
+          message: `Welcome back, ${userData.name || 'User'}!`,
         });
-
-        if (!res.ok) {
-          console.error("Backend error:", res.statusText);
-        } else {
-          const backendData = await res.json();
-          console.log("Backend response:", backendData);
-        }
-      } catch (backendError) {
-        console.error("Failed to fetch from backend:", backendError);
+      } else {
+        await signOut(auth); // Important: Log out user from Auth if they have no DB record
+        throw new Error("User profile not found in database. Please contact an admin.");
       }
-
-      // ✅ Continue flow
-      setIsAuthenticated(true);
-      setActiveView('dashboard');
-
-      addNotification({
-        type: NotificationType.GENERAL_INFO,
-        iconType: NotificationIconType.BELL,
-        message: `Welcome back, ${userData.name || 'User'}!`,
-      });
-
-    } else {
-      await signOut(auth);
-      throw new Error("User profile not found in database.");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      if (error.code === 'auth/invalid-credential') {
+        setLoginError('Invalid email or password.');
+      } else {
+        setLoginError(error.message);
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
-
-  } catch (error: any) {
-    console.error("Login failed:", error);
-    if (
-      error.code === 'auth/invalid-credential' ||
-      error.code === 'auth/wrong-password' ||
-      error.code === 'auth/user-not-found'
-    ) {
-      setLoginError('Invalid email or password.');
-    } else {
-      setLoginError(error.message);
-    }
-  } finally {
-    setIsLoggingIn(false);
-  }
-};
-
+  };
 
   const handleLogout = async () => {
     try {
