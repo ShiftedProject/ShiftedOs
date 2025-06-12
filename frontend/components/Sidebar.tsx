@@ -1,18 +1,18 @@
 import React from 'react';
-import { User, UserRole } from '../types';
+import { User, UserRole } from '../../types';
 
-// CORRECTED: Importing only the icons that exist in your project, with correct names.
+// CORRECTED: Importing all icons used in the navItems array below,
+// including the missing DocumentTextIcon.
 import DashboardIcon from './icons/DashboardIcon';
 import ProjectIcon from './icons/ProjectIcon';
-import FolderIcon from './icons/FolderIcon'; // Used for 'Asset Inventory'
-import UsersIcon from './icons/UsersIcon';   // Used for 'Team Management'
+import FolderIcon from './icons/FolderIcon';    // For 'Asset Inventory'
+import UsersIcon from './icons/UsersIcon';     // For 'Team Management' & 'CRM'
 import AnalyticsIcon from './icons/AnalyticsIcon';
 import FinanceIcon from './icons/FinanceIcon';
-import CrmIcon from './icons/CrmIcon'; // Assuming CrmIcon exists or we can use a substitute
-import KnowledgeIcon from './icons/KnowledgeIcon'; // Assuming KnowledgeIcon exists
-import OkrIcon from './icons/TargetIcon'; // Using TargetIcon for OKRs
-import ReportIcon from './icons/ReportIcon';
-import AdminIcon from './icons/CogIcon'; // Using CogIcon for Admin
+import DocumentTextIcon from './icons/DocumentTextIcon'; // For 'Knowledge Base'
+import TargetIcon from './icons/TargetIcon';   // For 'OKRs'
+import ChartBarSquareIcon from './icons/ChartBarSquareIcon'; // For 'Reports'
+import CogIcon from './icons/CogIcon';         // For 'Admin'
 import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
 
 // Define the props that this component receives from App.tsx
@@ -43,11 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'team', label: 'Team Management', icon: <UsersIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
     { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
     { id: 'finance', label: 'Finance', icon: <FinanceIcon />, roles: [UserRole.ADMIN, UserRole.FINANCE] },
-    { id: 'crm', label: 'Relations (CRM)', icon: <UsersIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] }, // Using UsersIcon as substitute
-    { id: 'knowledge', label: 'Knowledge Base', icon: <DocumentTextIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER] }, // Using DocumentTextIcon as substitute
-    { id: 'okr', label: 'OKRs', icon: <OkrIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
-    { id: 'reports', label: 'Reports', icon: <ReportIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
-    { id: 'admin', label: 'Admin Panel', icon: <AdminIcon />, roles: [UserRole.ADMIN] },
+    { id: 'crm', label: 'Relations (CRM)', icon: <UsersIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'knowledge', label: 'Knowledge Base', icon: <DocumentTextIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER] },
+    { id: 'okr', label: 'OKRs', icon: <TargetIcon />, roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER] },
+    { id: 'reports', label: 'Reports', icon: <ChartBarSquareIcon />, roles: [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER] },
+    { id: 'admin', label: 'Admin Panel', icon: <CogIcon />, roles: [UserRole.ADMIN] },
   ];
 
   const handleNavigation = (viewId: string) => {
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarContent = (
     <>
-      <div className="flex items-center mb-10 px-4" style={{ height: '4rem' /* Equivalent to h-16 */ }}>
+      <div className="flex items-center mb-10 px-4" style={{ height: '4rem' }}>
         <ShiftedOSLogoIcon className="h-10 w-10 text-main-accent" />
         {!isDesktopSidebarCollapsed && (
           <span className="ml-3 text-2xl font-bold text-text-primary">ShiftedOS</span>
@@ -89,19 +89,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ))}
       </nav>
-
-      <div className="mt-auto p-2">
-         <button
-            onClick={toggleDesktopSidebarCollapse}
-            className="w-full hidden md:flex items-center p-3 rounded-lg text-text-secondary hover:bg-main-accent/10 hover:text-text-primary"
-            title={isDesktopSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-           <span className="w-6 h-6">{/* Add collapse/expand icon here */}</span>
-            {!isDesktopSidebarCollapsed && (
-              <span className="ml-4 font-medium">Collapse</span>
-            )}
-        </button>
-      </div>
     </>
   );
 
