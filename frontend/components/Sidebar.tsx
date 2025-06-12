@@ -1,18 +1,18 @@
 import React from 'react';
-import { User, UserRole } from '../../types';
+// CORRECTED: The path to the 'types' file is now one level up, not two.
+import { User, UserRole } from '../types';
 
-// CORRECTED: Importing all icons used in the navItems array below,
-// including the missing DocumentTextIcon.
+// CORRECTED: Ensuring all icon paths are relative to the 'components' directory.
 import DashboardIcon from './icons/DashboardIcon';
 import ProjectIcon from './icons/ProjectIcon';
-import FolderIcon from './icons/FolderIcon';    // For 'Asset Inventory'
-import UsersIcon from './icons/UsersIcon';     // For 'Team Management' & 'CRM'
+import FolderIcon from './icons/FolderIcon';
+import UsersIcon from './icons/UsersIcon';
 import AnalyticsIcon from './icons/AnalyticsIcon';
 import FinanceIcon from './icons/FinanceIcon';
-import DocumentTextIcon from './icons/DocumentTextIcon'; // For 'Knowledge Base'
-import TargetIcon from './icons/TargetIcon';   // For 'OKRs'
-import ChartBarSquareIcon from './icons/ChartBarSquareIcon'; // For 'Reports'
-import CogIcon from './icons/CogIcon';         // For 'Admin'
+import DocumentTextIcon from './icons/DocumentTextIcon';
+import TargetIcon from './icons/TargetIcon';
+import ChartBarSquareIcon from './icons/ChartBarSquareIcon';
+import CogIcon from './icons/CogIcon';
 import ShiftedOSLogoIcon from './icons/ShiftedOSLogoIcon';
 
 // Define the props that this component receives from App.tsx
