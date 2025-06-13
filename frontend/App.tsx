@@ -2,13 +2,13 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 // Firebase Imports
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { onSnapshot, collection, doc, getDoc } from "firebase/firestore";
+import { onSnapshot, collection, doc, getDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from './src/firebase';
 
 // API Service Import
 import * as api from './src/services/api';
 
-// CORRECTED: Component paths are now relative to the root 'frontend' folder
+// Component, Type, and Asset Imports
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import ProjectCard from './components/ProjectCard';
@@ -32,25 +32,18 @@ import PlusIcon from './components/icons/PlusIcon';
 import ProjectIcon from './components/icons/ProjectIcon';
 import BellIcon from './components/icons/BellIcon';
 import FolderIcon from './components/icons/FolderIcon';
-
-// CORRECTED: Type and Constant paths are also relative to the root 'frontend' folder
 import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, AssetType, Role, ThemeColors, UserRole, AnalyticsConfig, TaskPriority } from './types';
 import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, TASK_PRIORITY_OPTIONS } from './constants';
 
-
-// Mock data for static UI elements
 const MOCK_ROLES_LIST: Role[] = [ { id: 'ROLE-001', name: 'Admin', description: 'Manages the entire ShiftedOS platform.' }, { id: 'ROLE-002', name: 'Editor', description: 'Oversees projects, tasks, and content quality.' }, { id: 'ROLE-003', name: 'Script Writer', description: 'Focuses on creating and managing task content, especially scripts.' }, { id: 'ROLE-004', name: 'Viewer', description: 'Has read-only access to most platform data.' }, { id: 'ROLE-005', name: 'Finance', description: 'Manages financial data and budgeting.' }, { id: 'ROLE-006', name: 'Project Manager', description: 'Manages projects, timelines, and team assignments.' },];
 const DEFAULT_THEME: ThemeColors = { mainBackground: '#F5ECE0', glassBg: 'rgba(255, 255, 255, 0.35)', mainAccent: '#336D82', secondaryAccent: '#5F99AE', highlight: '#693382', textPrimary: '#1F2937', textSecondary: '#6B7280',};
-const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfig = { metricVisibility: { activeProjects: true, tasksCompleted: true, totalContentViews: true, teamEngagement: true, }, chartType: 'Bar Chart',};
-
 
 const App: React.FC = () => {
-  // State declarations...
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | undefined>(undefined);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeView, setActiveView] = useState<string>('dashboard');
+  const [activeView, setActiveView] = useState<string>('dashboard'); 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -65,15 +58,7 @@ const App: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
-  const [projectError, setProjectError] = useState<string | null>(null);
-  const [taskError, setTaskError] = useState<string | null>(null);
-  const [isSavingProject, setIsSavingProject] = useState<boolean>(false);
-  const [isSavingTask, setIsSavingTask] = useState<boolean>(false);
 
-
-  // Real-time auth and data fetching...
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
@@ -102,7 +87,6 @@ const App: React.FC = () => {
     return () => { unsubProjects(); unsubTasks(); unsubUsers(); };
   }, [isAuthenticated]);
 
-  // Authentication handlers...
   const handleLogin = async (email: string, pass: string) => {
     setIsLoggingIn(true);
     setLoginError(undefined);
@@ -123,179 +107,28 @@ const App: React.FC = () => {
       console.error("Logout failed:", error);
     }
   };
+
+  const addNotification = useCallback((notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotification: Notification = { ...notificationData, id: `NTF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, timestamp: new Date().toISOString(), read: false, };
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50));
+  }, []);
   
-  // Placeholder CRUD handlers
-  const handleSaveProject = async () => alert("Feature not connected yet.");
-  const handleDeleteProject = async (projectId: string) => alert("Feature not connected yet.");
-  const handleSaveTask = async () => alert("Feature not connected yet.");
-  const handleDeleteTask = async (taskId: string) => alert("Feature not connected yet.");
-  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => alert("Feature not connected yet.");
-  const handleUpdateUserProfile = async (profile: Partial<User>) => alert("Feature not connected yet.");
-  const handleAddNewUser = async (name: string, email: string, role: UserRole, pass: string) => { alert("Feature not connected yet."); return false; };
-  const handleEditUserRole = async (userId: string, newRole: UserRole) => alert("Feature not connected yet.");
-
-  // Other handlers and utility functions...
-  const addNotification = useCallback(() => {}, []);
   const getTasksForSelectedProject = useCallback(() => tasks.filter(task => task.projectId === selectedProjectId), [tasks, selectedProjectId]);
-  const handleOpenTaskModal = (taskToEdit?: Task) => { setIsTaskModalOpen(true); /* Simplified */ };
-  const handleOpenProjectModal = (projectToEdit?: Project) => { setIsProjectModalOpen(true); /* Simplified */ };
-  const handleCloseProjectModal = () => setIsProjectModalOpen(false);
-  const handleCloseTaskModal = () => setIsTaskModalOpen(false);
-
-  // --- THIS IS THE FINAL, FULL RENDER LOGIC ---
+  
   const renderContent = () => {
-    // This logic is restored from your original code to show the full UI
     switch (activeView) {
       case 'dashboard':
-        const activeProjectsCount = projects.filter(p => p.status === ProjectStatus.ACTIVE).length;
-        const tasksDueSoonCount = tasks.filter(t => {
-            if (!t.deadline) return false;
-            const deadlineDate = new Date(t.deadline);
-            const today = new Date();
-            const threeDaysFromNow = new Date(); 
-            threeDaysFromNow.setDate(today.getDate() + 3);
-            return deadlineDate <= threeDaysFromNow && t.status !== TaskStatus.DONE && t.status !== TaskStatus.PUBLISHED;
-        }).length;
-
         return (
-            <div className="space-y-6">
-                <div className="bg-white p-6 sm:p-8 rounded-xl shadow-glass-depth border border-gray-200/50">
-                    <h1 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-2">
-                        Welcome back, <span className="text-main-accent">{currentUser?.name?.split(' ')[0] || 'User'}</span>!
-                    </h1>
-                    <p className="text-text-secondary">Here's a quick overview of your ShiftedOS workspace. Your role: <Tag text={currentUser?.role || ''} color="highlight" size="sm" />
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                     <div 
-                        className="bg-white p-5 rounded-xl shadow-glass-depth border border-gray-200/50 cursor-pointer hover:shadow-strong transition-shadow" 
-                        onClick={() => { setActiveView('tasks'); setSelectedProjectId(null); }}
-                    >
-                        <div className="flex items-center text-main-accent mb-2">
-                            <ProjectIcon className="w-7 h-7 mr-3" />
-                            <h3 className="text-lg font-semibold">Active Projects</h3>
-                        </div>
-                        <p className="text-3xl font-bold text-text-primary">{activeProjectsCount}</p>
-                        <p className="text-xs text-text-secondary mt-1">View All Projects &rarr;</p>
-                    </div>
-                     <div 
-                        className="bg-white p-5 rounded-xl shadow-glass-depth border border-gray-200/50 cursor-pointer hover:shadow-strong transition-shadow"
-                        onClick={() => { setActiveView('tasks'); setSelectedProjectId(null); }} 
-                    >
-                        <div className="flex items-center text-highlight mb-2">
-                            <BellIcon className="w-7 h-7 mr-3" />
-                            <h3 className="text-lg font-semibold">Tasks Due Soon</h3>
-                        </div>
-                        <p className="text-3xl font-bold text-text-primary">{tasksDueSoonCount}</p>
-                        <p className="text-xs text-text-secondary mt-1">Manage Upcoming Deadlines &rarr;</p>
-                    </div>
-                     <div 
-                        className={`bg-white p-5 rounded-xl shadow-glass-depth border border-gray-200/50 transition-shadow 
-                                    ${currentUser && [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER].includes(currentUser.role) ? 'cursor-pointer hover:shadow-strong' : 'opacity-70 cursor-not-allowed'}`}
-                        onClick={() => currentUser && [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER].includes(currentUser.role) && handleOpenTaskModal()}
-                        title={!(currentUser && [UserRole.ADMIN, UserRole.EDITOR, UserRole.SCRIPT_WRITER, UserRole.PROJECT_MANAGER].includes(currentUser.role)) ? "Not allowed to add tasks" : "Quickly create a new task"}
-                    >
-                        <div className="flex items-center text-secondary-accent mb-2">
-                            <PlusIcon className="w-7 h-7 mr-3" />
-                            <h3 className="text-lg font-semibold">Quick Add Task</h3>
-                        </div>
-                        <p className="text-text-secondary">Quickly create a new task.</p>
-                        <p className="text-xs text-text-secondary mt-1">Add to a Project &rarr;</p>
-                    </div>
-                </div>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold">Welcome, {currentUser?.name}</h1>
+            <p>Your Role: {currentUser?.roleName}</p>
+          </div>
         );
-      case 'tasks': 
-        if (selectedProjectId) {
-          const currentProject = projects.find(p => p.id === selectedProjectId);
-          const projectTasks = getTasksForSelectedProject();
-          if (!currentProject) {
-            return (
-              <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
-                <p className="text-text-secondary text-lg">Project not found.</p>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedProjectId(null)} className="mt-4">
-                  &larr; Back to Projects
-                </Button>
-              </div>
-            );
-          }
-          return (
-            <ProjectDetailView
-                project={currentProject}
-                tasks={projectTasks}
-                onBackToProjects={() => setSelectedProjectId(null)}
-            />
-          );
-        } else {
-          return (
-            <div>
-              <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-                <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary">All Projects</h2>
-              </div>
-              {projects.length === 0 ? (
-                 <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
-                    <p className="text-text-secondary text-lg">No projects yet. Create your first project!</p>
-                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                  {projects.map(project => (
-                    <ProjectCard 
-                      key={project.id}
-                      project={project}
-                      onViewTasks={() => setSelectedProjectId(project.id)}
-                      onEdit={() => handleOpenProjectModal(project)}
-                      onDelete={() => handleDeleteProject(project.id)}
-                      currentUserRole={currentUser?.role || UserRole.VIEWER}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        }
-      case 'assets': return <AssetView onAddNotification={addNotification} />;
-      case 'team': return <TeamView users={users} roles={MOCK_ROLES_LIST} currentUser={currentUser} onAddNewUser={handleAddNewUser} onEditUserRole={handleEditUserRole} />;
-      case 'analytics': return <AnalyticsView initialConfig={DEFAULT_ANALYTICS_CONFIG} activeProjectsCount={projects.length} tasksCompletedCount={tasks.filter(t=>t.status === 'Done').length} totalContentViews={100} teamEngagement={"N/A"} />;
-      case 'finance': return <FinanceView currentUser={currentUser} projects={projects} tasks={tasks} />;
-      case 'crm': return <CrmView />;
-      case 'knowledge': return <KnowledgeBaseView />;
-      case 'okr': return <OkrView />;
-      case 'reports': return <ReportView projects={projects} tasks={tasks} users={users} currentUser={currentUser} />;
-      case 'profile': 
-        return <ProfileView 
-                  currentUser={currentUser} 
-                  onUpdateProfile={handleUpdateUserProfile} 
-                  onLogout={handleLogout} 
-                  isLoading={isUpdatingProfile} 
-                  error={profileError}
-                />;
-      case 'admin':
-        return currentUser?.role === UserRole.ADMIN ? ( 
-            <AdminView 
-                currentTheme={DEFAULT_THEME}
-                defaultTheme={DEFAULT_THEME}
-                onThemeChange={()=>{}}
-                mockUsers={users}
-                mockProjects={projects}
-                mockTasks={tasks}
-                initialAnalyticsConfig={DEFAULT_ANALYTICS_CONFIG}
-                onAnalyticsConfigChange={()=>{}}
-                onAddNewUser={handleAddNewUser}
-                onEditUserRole={handleEditUserRole}
-                rolesList={MOCK_ROLES_LIST}
-            />
-        ) : (
-            <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
-                <p className="text-xl text-text-secondary">Access Denied. This area is for administrators only.</p>
-            </div>
-        );
-      default: 
-         return (
-            <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
-                <p className="text-xl text-text-secondary">Select a module to get started.</p>
-            </div>
-        );
+      case 'tasks':
+        return <div>Projects and Tasks View</div>;
+      // Add other view cases here...
+      default:
+        return <div>Select a view from the sidebar.</div>;
     }
   };
 
@@ -320,19 +153,17 @@ const App: React.FC = () => {
       />
       <div className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${isDesktopSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         <Header 
-          title={"Dashboard"} // This should be dynamic based on activeView
+          title={activeView.charAt(0).toUpperCase() + activeView.slice(1)}
           notifications={notifications}
           unreadNotificationCount={notifications.filter(n=>!n.read).length}
-          onMarkAllNotificationsAsRead={() => {}}
-          onMarkNotificationAsRead={() => {}}
+          onMarkAllNotificationsAsRead={() => setNotifications(prev => prev.map(n => ({...n, read: true})))}
+          onMarkNotificationAsRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n))}
           onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-          // Other Header props need to be passed here
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-glass-bg backdrop-blur-xl"> 
           {renderContent()}
         </main>
       </div>
-      {/* Your Modals would go here */}
     </div>
   );
 };
