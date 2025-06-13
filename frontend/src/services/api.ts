@@ -14,7 +14,7 @@ const getAuthHeaders = async () => {
     'Content-Type': 'application/json',
   };
 };
-
+//
 // --- API FUNCTIONS ---
 
 // PROJECTS
