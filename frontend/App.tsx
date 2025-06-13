@@ -67,6 +67,11 @@ const App: React.FC = () => {
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState<boolean>(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState<boolean>(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [taskError, setTaskError] = useState<string | null>(null);
+  const [isSavingProject, setIsSavingProject] = useState<boolean>(false);
+  const [isSavingTask, setIsSavingTask] = useState<boolean>(false);
+
 
   // Real-time auth and data fetching...
   useEffect(() => {
@@ -98,9 +103,27 @@ const App: React.FC = () => {
   }, [isAuthenticated]);
 
   // Authentication handlers...
-  const handleLogin = async (email: string, pass: string) => { /* implementation... */ };
-  const handleLogout = async () => { /* implementation... */ };
+  const handleLogin = async (email: string, pass: string) => {
+    setIsLoggingIn(true);
+    setLoginError(undefined);
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      setLoginError('Invalid email or password.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+  
   // Placeholder CRUD handlers
   const handleSaveProject = async () => alert("Feature not connected yet.");
   const handleDeleteProject = async (projectId: string) => alert("Feature not connected yet.");
@@ -114,9 +137,10 @@ const App: React.FC = () => {
   // Other handlers and utility functions...
   const addNotification = useCallback(() => {}, []);
   const getTasksForSelectedProject = useCallback(() => tasks.filter(task => task.projectId === selectedProjectId), [tasks, selectedProjectId]);
-  const handleOpenTaskModal = (taskToEdit?: Task) => { /* implementation... */ };
-  const handleOpenProjectModal = (projectToEdit?: Project) => { /* implementation... */ };
-
+  const handleOpenTaskModal = (taskToEdit?: Task) => { setIsTaskModalOpen(true); /* Simplified */ };
+  const handleOpenProjectModal = (projectToEdit?: Project) => { setIsProjectModalOpen(true); /* Simplified */ };
+  const handleCloseProjectModal = () => setIsProjectModalOpen(false);
+  const handleCloseTaskModal = () => setIsTaskModalOpen(false);
 
   // --- THIS IS THE FINAL, FULL RENDER LOGIC ---
   const renderContent = () => {
