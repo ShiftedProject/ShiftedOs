@@ -8,30 +8,32 @@ import { auth, db } from './src/firebase';
 // API Service Import
 import * as api from './src/services/api';
 
-// Component, Type, and Asset Imports
-import Sidebar from './src/components/Sidebar';
-import Header from './src/components/Header';
-import ProjectCard from './src/components/ProjectCard';
-import Modal from './src/components/Modal';
-import Button from './src/components/Button';
-import SelectInput from './src/components/SelectInput';
-import Tag from './src/components/Tag';
-import AnalyticsView from './src/components/AnalyticsView';
-import FinanceView from './src/components/FinanceView';
-import CrmView from './src/components/CrmView';
-import KnowledgeBaseView from './src/components/KnowledgeBaseView';
-import OkrView from './src/components/OkrView';
-import ReportView from './src/components/ReportView';
-import ProfileView from './src/components/ProfileView';
-import ProjectDetailView from './src/components/ProjectDetailView';
-import AssetView from './src/components/AssetView';
-import TeamView from './src/components/TeamView';
-import LandingPage from './src/components/LandingPage';
-import AdminView from './src/components/AdminView';
-import PlusIcon from './src/components/icons/PlusIcon';
-import ProjectIcon from './src/components/icons/ProjectIcon';
-import BellIcon from './src/components/icons/BellIcon';
-import FolderIcon from './src/components/icons/FolderIcon';
+// CORRECTED: Component paths are now relative to the root 'frontend' folder
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import ProjectCard from './components/ProjectCard';
+import Modal from './components/Modal';
+import Button from './components/Button';
+import SelectInput from './components/SelectInput';
+import Tag from './components/Tag';
+import AnalyticsView from './components/AnalyticsView';
+import FinanceView from './components/FinanceView';
+import CrmView from './components/CrmView';
+import KnowledgeBaseView from './components/KnowledgeBaseView';
+import OkrView from './components/OkrView';
+import ReportView from './components/ReportView';
+import ProfileView from './components/ProfileView';
+import ProjectDetailView from './components/ProjectDetailView';
+import AssetView from './components/AssetView';
+import TeamView from './components/TeamView';
+import LandingPage from './components/LandingPage';
+import AdminView from './components/AdminView';
+import PlusIcon from './components/icons/PlusIcon';
+import ProjectIcon from './components/icons/ProjectIcon';
+import BellIcon from './components/icons/BellIcon';
+import FolderIcon from './components/icons/FolderIcon';
+
+// CORRECTED: Type and Constant paths are also relative to the root 'frontend' folder
 import { Task, TaskStatus, Division, ContentPillar, User, Notification, NotificationType, NotificationIconType, Project, ProjectStatus, AssetType, Role, ThemeColors, UserRole, AnalyticsConfig, TaskPriority } from './types';
 import { TASK_STATUS_OPTIONS, DIVISION_OPTIONS, CONTENT_PILLAR_OPTIONS, NASKAH_TEMPLATE, PROJECT_STATUS_OPTIONS, TASK_PRIORITY_OPTIONS } from './constants';
 
