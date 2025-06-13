@@ -1,7 +1,7 @@
 import { auth } from '../firebase'; // Import your auth instance from your firebase.ts file
 
 // !!! IMPORTANT: Replace this with your actual Cloud Run service URL !!!
-const BASE_URL = 'https://shifted-os-backend-732920301940.asia-southeast2.run.app';
+const BASE_URL = 'https://shifted-os-backend-732920301940.asia-southeast2.run.app'; 
 
 // --- HELPER FUNCTION ---
 // This automatically gets the current user's token and creates the auth header.
@@ -18,11 +18,6 @@ const getAuthHeaders = async () => {
 // --- API FUNCTIONS ---
 
 // PROJECTS
-export const getProjects = async () => {
-  const response = await fetch(`${BASE_URL}/api/projects`, { headers: await getAuthHeaders() });
-  if (!response.ok) throw new Error('Failed to fetch projects');
-  return response.json();
-};
 export const createProject = async (projectData: any) => {
   const response = await fetch(`${BASE_URL}/api/projects`, { method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify(projectData) });
   if (!response.ok) throw new Error('Failed to create project');
@@ -39,11 +34,6 @@ export const deleteProject = async (id: string) => {
 };
 
 // TASKS
-export const getTasks = async () => {
-  const response = await fetch(`${BASE_URL}/api/tasks`, { headers: await getAuthHeaders() });
-  if (!response.ok) throw new Error('Failed to fetch tasks');
-  return response.json();
-};
 export const createTask = async (taskData: any) => {
   const response = await fetch(`${BASE_URL}/api/tasks`, { method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify(taskData) });
   if (!response.ok) throw new Error('Failed to create task');
@@ -57,11 +47,4 @@ export const updateTask = async (id: string, taskData: any) => {
 export const deleteTask = async (id: string) => {
   const response = await fetch(`${BASE_URL}/api/tasks/${id}`, { method: 'DELETE', headers: await getAuthHeaders() });
   if (!response.ok) throw new Error('Failed to delete task');
-};
-
-// USERS
-export const getUsers = async () => {
-  const response = await fetch(`${BASE_URL}/api/users`, { headers: await getAuthHeaders() });
-  if (!response.ok) throw new Error('Failed to fetch users');
-  return response.json();
 };

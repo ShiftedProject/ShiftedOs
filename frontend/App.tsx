@@ -312,6 +312,7 @@ const App: React.FC = () => {
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
         isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
         toggleDesktopSidebarCollapse={() => setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed)}
+        onLogout={handleLogout}
       />
       <div className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 ease-in-out ${isDesktopSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         <Header 
