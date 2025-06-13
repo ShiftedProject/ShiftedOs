@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 // Firebase Imports
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { onSnapshot, collection, doc, getDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { onSnapshot, collection, doc, getDoc } from "firebase/firestore";
 import { auth, db } from './src/firebase';
 
 // API Service Import
@@ -286,7 +286,7 @@ const App: React.FC = () => {
       default: 
          return (
             <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
-                <p className="text-xl text-text-secondary">Select a module to get started.</p>
+                <p className="text-xl text-text-secondary">Viewing the '{activeView}' module.</p>
             </div>
         );
     }
@@ -301,7 +301,7 @@ const App: React.FC = () => {
     return <LandingPage onLogin={handleLogin} loginError={loginError} isLoading={isLoggingIn} />;
   }
 
-  // --- THIS IS THE FINAL, FULL JSX LAYOUT ---
+  // Final JSX with full layout including Modals
   return (
     <div className="flex h-screen bg-main-background text-text-primary overflow-hidden">
       <Sidebar 
