@@ -301,7 +301,7 @@ const App: React.FC = () => {
     return <LandingPage onLogin={handleLogin} loginError={loginError} isLoading={isLoggingIn} />;
   }
 
-  // Final JSX with full layout including Modals
+  // --- FINAL JSX with Full Layout including Modals ---
   return (
     <div className="flex h-screen bg-main-background text-text-primary overflow-hidden">
       <Sidebar 
