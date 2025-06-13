@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 
 // Firebase Imports
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { onSnapshot, collection, doc, getDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { onSnapshot, collection, doc, getDoc } from "firebase/firestore";
 import { auth, db } from './src/firebase';
 
 // API Service Import
@@ -121,14 +121,14 @@ const App: React.FC = () => {
   };
   
   // --- CRUD HANDLERS (Connect to API service) ---
-  const handleSaveProject = async () => { /* Logic to call api.createProject or api.updateProject */ };
-  const handleDeleteProject = async (projectId: string) => { /* Logic to call api.deleteProject */ };
-  const handleSaveTask = async () => { /* Logic to call api.createTask or api.updateTask */ };
-  const handleDeleteTask = async (taskId: string) => { /* Logic to call api.deleteTask */ };
-  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => { /* Logic to call api.updateTask */ };
-  const handleUpdateUserProfile = async (profile: Partial<User>) => { /* Logic to call an api.updateUser function */ };
-  const handleAddNewUser = async (name: string, email: string, role: UserRole, pass: string) => { /* Logic to call secure Cloud Function */ return false; };
-  const handleEditUserRole = async (userId: string, newRole: UserRole) => { /* Logic to call secure Cloud Function */ };
+  const handleSaveProject = async () => { alert("Feature not connected yet."); };
+  const handleDeleteProject = async (projectId: string) => { alert("Feature not connected yet."); };
+  const handleSaveTask = async () => { alert("Feature not connected yet."); };
+  const handleDeleteTask = async (taskId: string) => { alert("Feature not connected yet."); };
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => { alert("Feature not connected yet."); };
+  const handleUpdateUserProfile = async (profile: Partial<User>) => { alert("Feature not connected yet."); };
+  const handleAddNewUser = async (name: string, email: string, role: UserRole, pass: string) => { alert("Feature not connected yet."); return false; };
+  const handleEditUserRole = async (userId: string, newRole: UserRole) => { alert("Feature not connected yet."); };
   
   // --- UTILITY FUNCTIONS ---
   const addNotification = useCallback(() => {}, []);
@@ -139,7 +139,7 @@ const App: React.FC = () => {
   const handleCloseTaskModal = () => setIsTaskModalOpen(false);
 
 
-  // --- THIS IS THE FULL RENDER LOGIC FROM YOUR ORIGINAL CODE ---
+  // --- THIS IS THE FINAL, FULL RENDER LOGIC ---
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
@@ -228,8 +228,17 @@ const App: React.FC = () => {
             <div>
               <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary">All Projects</h2>
+                <Button
+                  onClick={() => handleOpenProjectModal()}
+                  variant="primary"
+                  leftIcon={<ProjectIcon className="w-5 h-5 mr-2" />}
+                  disabled={!(currentUser && [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER].includes(currentUser.role))}
+                  title={!(currentUser && [UserRole.ADMIN, UserRole.EDITOR, UserRole.PROJECT_MANAGER].includes(currentUser.role)) ? "You don't have permission to add projects" : "Create a new project"}
+                >
+                  New Project
+                </Button>
               </div>
-              {projects.length === 0 ? (
+              {projects.length === 0 && !isLoading ? (
                  <div className="bg-white rounded-xl p-10 shadow-glass-depth text-center">
                     <p className="text-text-secondary text-lg">No projects yet. Create your first project!</p>
                  </div>
@@ -304,7 +313,6 @@ const App: React.FC = () => {
     return <LandingPage onLogin={handleLogin} loginError={loginError} isLoading={isLoggingIn} />;
   }
 
-  // Final JSX with full layout
   return (
     <div className="flex h-screen bg-main-background text-text-primary overflow-hidden">
       <Sidebar 
